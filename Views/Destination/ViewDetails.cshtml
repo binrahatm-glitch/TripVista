@@ -1,0 +1,84 @@
+﻿@model TripVista.Models.Entities.Destinations
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Details</title>
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <style>
+        body {
+            background-color: #f5f6fa;
+        }
+
+        .hero-image {
+            width: 100%;
+            height: 320px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        .info-box {
+            background: #fff;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .label-title {
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Title -->
+    <h2 class="text-center mb-4">@Model.Name</h2> <!-- Image -->
+    <div class="text-center mb-4">
+        <img src="@Model.ImagePath" alt="@Model.Name" class="hero-image shadow-sm" />
+    </div> <!-- Info Card -->
+    <div class="info-box"> 
+        <div class="row mb-3"> <div class="col-md-6"> 
+            <p><span class="label-title">Category:</span> @Model.Category</p> 
+        </div> 
+        <div class="col-md-6"> 
+            <p><span class="label-title">Location:</span> @Model.Location</p> 
+        </div> 
+    </div> 
+    @if (!string.IsNullOrWhiteSpace(Model.Description)) {
+    <h5 class="mt-4">Description</h5>
+    <p>@Model.Description</p>
+  } @if(!string.IsNullOrWhiteSpace(Model.BestTimeToVisit)) {
+        <h5 class="mt-4">Best Time to Visit</h5>
+        <p>@Model.BestTimeToVisit</p>
+ } 
+ 
+ <div class= "row mt-4" > 
+     <div class= "col-md-6" > 
+         <p><span class= "label-title" > Latitude:</span > @Model.Latitude </p > 
+     </div > 
+     <div class= "col-md-6" > 
+         <p><span class= "label-title" > Longitude:</span > @Model.Longitude </p > 
+     </div > 
+ </div > 
+     <h5 class= "mt-4" > Average Cost </h5 > 
+     <p> @if(Model.AverageCostMin.HasValue && Model.AverageCostMax.HasValue) {
+        @($"${Model.AverageCostMin} - ${Model.AverageCostMax}")
+    } else
+    {
+
+        <span>Not Available</span>
+    }
+ </p> 
+ <!-- Buttons --> 
+ <div class="mt-4"> 
+     <a asp-controller="User" asp-action="UserDashboard" class="btn btn-secondary"> Back to Destinations </a> 
+ </div> 
+ </div>
+
+</body>
+</html>
