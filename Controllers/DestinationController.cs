@@ -1,90 +1,107 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using TripVista.Data;
+using Microsoft.AspNetCore.Mvc;
+using TripVista.Filters;
 using TripVista.Models.DTO;
 using TripVista.Models.Entities;
 using TripVista.Services.Interfaces;
 
 namespace TripVista.Controllers
 {
+    [RequireRole("user", "admin")]
     public class DestinationController : Controller
     {
         private readonly IDestinationDAO _destinationDAO;
-        private readonly IUserSubmissionDAO _userSubmissionDAO;
 
-        public DestinationController(IDestinationDAO destinationDAO, IUserSubmissionDAO userSubmissionDAO)
+        public DestinationController(IDestinationDAO destinationDAO)
         {
             _destinationDAO = destinationDAO;
-            _userSubmissionDAO = userSubmissionDAO;
         }
 
         [HttpGet]
-        public IActionResult ViewDetails(Guid id)
+        public async Task<IActionResult> Destinations()
         {
-            var destination = _destinationDAO.GetById(id);
+            var destinations = await _destinationDAO.GetApprovedAsync();
+            return View(destinations);
+        }
 
-            if (destination == null)
+        [HttpGet]
+        public async Task<IActionResult> ViewDetails(Guid id)
+        {
+            var destination = await _destinationDAO.GetByIdAsync(id);
+            if (destination == null || destination.Status != "Approved")
             {
-                return NotFound(); 
+                return NotFound();
             }
 
             return View(destination);
         }
+
         [HttpGet]
+        [RequireRole("user")]
         public IActionResult AddDestination()
         {
             return View();
         }
-        [HttpGet]
-        public IActionResult Destinations()
-        {
-            List<Destinations> destinations = _destinationDAO.GetAll();
-            return View(destinations);
-        }
-
 
         [HttpPost]
+        [RequireRole("user")]
         public async Task<IActionResult> AddDestination(AddDestinationDTO dest)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                string? ImagePath = null;
-
-                if (dest.Image != null)
-                {
-                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
-                    Directory.CreateDirectory(uploadsFolder);
-
-                    var fileName = $"{Guid.NewGuid()}{Path.GetExtension(dest.Image.FileName)}";
-                    var filePath = Path.Combine(uploadsFolder, fileName);
-
-                    using var stream = new FileStream(filePath, FileMode.Create);
-                    await dest.Image.CopyToAsync(stream);
-
-                    ImagePath = $"/images/{fileName}";
-                }
-                var newDestination = new UserSubmissions
-                {
-                    Name = dest.Name,
-                    Category = dest.Category,
-                    Location = dest.Location,
-                    Description = dest.Description,
-                    ImagePath = ImagePath,
-                    Status = "Pending",
-                    UserId = HttpContext.Session.GetString("id") != null ? Guid.Parse(HttpContext.Session.GetString("id")!) : Guid.Empty,
-                    CreatedAt = DateTime.UtcNow
-                };
-                _userSubmissionDAO.Create(newDestination);
-                _userSubmissionDAO.Save();
-                return RedirectToAction("SubmissionResponse", new { id = newDestination.SubmissionId });
+                return View(dest);
             }
-            return View(dest);
+
+            string? imageUrl = null;
+            if (dest.Image != null)
+            {
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
+                Directory.CreateDirectory(uploadsFolder);
+
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(dest.Image.FileName)}";
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                using var stream = new FileStream(filePath, FileMode.Create);
+                await dest.Image.CopyToAsync(stream);
+
+                imageUrl = $"/images/{fileName}";
+            }
+
+            var userId = Guid.Parse(HttpContext.Session.GetString("id")!);
+
+            var newDestination = new Destinations
+            {
+                DestinationId = Guid.NewGuid(),
+                Name = dest.Name,
+                Location = dest.Location,
+                Description = dest.Description,
+                ImageUrl = imageUrl,
+                Status = "Pending",
+                SubmittedByUserId = userId,
+                SubmittedAt = DateTime.Now
+            };
+
+            await _destinationDAO.CreateAsync(newDestination);
+
+            return RedirectToAction("SubmissionResponse", new { id = newDestination.DestinationId });
         }
 
         [HttpGet]
-        public IActionResult SubmissionResponse(Guid id)
+        [RequireRole("user")]
+        public async Task<IActionResult> SubmissionResponse(Guid id)
         {
-            UserSubmissions? submission = _userSubmissionDAO.GetById(id);
+            var submission = await _destinationDAO.GetByIdAsync(id);
+            if (submission == null) return NotFound();
+
             return View(submission);
+        }
+
+        [HttpGet]
+        [RequireRole("user")]
+        public async Task<IActionResult> MySubmissions()
+        {
+            var userId = Guid.Parse(HttpContext.Session.GetString("id")!);
+            var submissions = await _destinationDAO.GetByUserIdAsync(userId);
+            return View(submissions);
         }
     }
 }

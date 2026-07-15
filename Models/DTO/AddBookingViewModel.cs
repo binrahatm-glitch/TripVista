@@ -1,18 +1,15 @@
-﻿namespace TripVista.Models.DTO
+using System.ComponentModel.DataAnnotations;
+
+namespace TripVista.Models.DTO
 {
     public class AddBookingViewModel
     {
         public Guid PackageId { get; set; }
-        public Guid UserId { get; set; }
         public string PackageTitle { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-        public decimal Discount { get; set; }
+        public decimal PricePerPerson { get; set; }
+        public int MaxGroupSize { get; set; }
 
-        public string FullName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Phone { get; set; } = string.Empty;
-
-        public int NumberOfPersons { get; set; }
-        public DateTime TravelDate { get; set; }
+        [Range(1, int.MaxValue, ErrorMessage = "At least 1 traveler is required.")]
+        public int NumberOfTravelers { get; set; } = 1;
     }
 }

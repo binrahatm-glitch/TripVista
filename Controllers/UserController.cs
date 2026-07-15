@@ -1,39 +1,34 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using TripVista.Models.Entities;
+using Microsoft.AspNetCore.Mvc;
+using TripVista.Filters;
 using TripVista.Services.Interfaces;
 
 namespace TripVista.Controllers
 {
+    [RequireRole("user")]
     public class UserController : Controller
     {
         private readonly IPackageDAO _packageDAO;
-        private readonly IDestinationDAO _destinationDAO;
         private readonly IUserDAO _userDAO;
 
-        public UserController(IPackageDAO packageDAO, IDestinationDAO destinationDAO, IUserDAO userDAO)
+        public UserController(IPackageDAO packageDAO, IUserDAO userDAO)
         {
             _packageDAO = packageDAO;
-            _destinationDAO = destinationDAO;
             _userDAO = userDAO;
         }
 
         [HttpGet]
         public async Task<IActionResult> UserDashboard()
         {
-            
-            var packages = await _packageDAO.GetAllPackagesWithDestinationsAsync();
-
-
+            var packages = await _packageDAO.GetActiveAsync();
             return View(packages);
         }
 
         [HttpGet]
-        public IActionResult Profile()
+        public async Task<IActionResult> Profile()
         {
-            Users? user = _userDAO.GetUserByIdAsync(Guid.Parse(HttpContext.Session.GetString("id") ?? string.Empty)).Result;
+            var userId = Guid.Parse(HttpContext.Session.GetString("id") ?? string.Empty);
+            var user = await _userDAO.GetUserByIdAsync(userId);
             return View(user);
         }
     }
-
 }

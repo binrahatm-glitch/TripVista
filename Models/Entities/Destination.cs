@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 namespace TripVista.Models.Entities
 {
@@ -11,28 +10,29 @@ namespace TripVista.Models.Entities
         [Required, MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
-        [MaxLength(50)]
-        public string? Category { get; set; }
-
         [MaxLength(100)]
         public string? Location { get; set; }
 
         public string? Description { get; set; }
-        public string? ImagePath { get; set; }
 
-        public string? BestTimeToVisit { get; set; }
+        public string? ImageUrl { get; set; }
 
-        public decimal? Latitude { get; set; }
-        public decimal? Longitude { get; set; }
+        public Guid SubmittedByUserId { get; set; }
 
-        public decimal? AverageCostMin { get; set; }
-        public decimal? AverageCostMax { get; set; }
+        [Required, MaxLength(20)]
+        public string Status { get; set; } = "Pending"; // Pending, Approved, Rejected
 
-        public bool IsActive { get; set; } = true;
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public string? AdminRemarks { get; set; }
+
+        public Guid? ReviewedByAdminId { get; set; }
+
+        public DateTime SubmittedAt { get; set; } = DateTime.Now;
+
+        public DateTime? ReviewedAt { get; set; }
 
         // Navigation
+        public Users? SubmittedByUser { get; set; }
+        public Users? ReviewedByAdmin { get; set; }
         public ICollection<PackageDestinations>? PackageDestinations { get; set; }
-        public ICollection<Reviews>? Reviews { get; set; }
     }
 }

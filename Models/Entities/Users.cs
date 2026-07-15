@@ -20,13 +20,14 @@ namespace TripVista.Models.Entities
         [Required]
         public string Role { get; set; } = "user"; // user/admin
 
+        public bool IsEmailVerified { get; set; } = false;
+
         public string? AvatarPath { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation
         public ICollection<Bookings>? Bookings { get; set; }
-        public ICollection<Reviews>? Reviews { get; set; }
-        public ICollection<UserSubmissions>? UserSubmissions { get; set; }
+        public ICollection<Destinations>? SubmittedDestinations { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TripVista.Data;
 using TripVista.Models.Entities;
 using TripVista.Services.Interfaces;
@@ -14,53 +14,110 @@ namespace TripVista.Services
             _context = context;
         }
 
-        public IEnumerable<Packages> GetAll()
-        {
-            return _context.Packages
-                .Include(p => p.PackageDestinations)
-                    .ThenInclude(pd => pd.Destination)
-                .ToList();
-        }
-
-        public async Task<List<Packages>> GetAllPackagesWithDestinationsAsync()
+        public async Task<List<Packages>> GetAllAsync()
         {
             return await _context.Packages
-                .Include(p => p.PackageDestinations)
-                .ThenInclude(pd => pd.Destination)
+                .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
         }
 
-        public Packages? GetById(Guid id)
+        public async Task<List<Packages>> GetActiveAsync()
         {
-            Packages? packages = _context.Packages
-                .Include(p => p.PackageDestinations)
+            return await _context.Packages
+                .Where(p => p.IsActive)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<Packages?> GetByIdAsync(Guid id)
+        {
+            var package = await _context.Packages
+                .Include(p => p.PackageDestinations!)
                     .ThenInclude(pd => pd.Destination)
-                .FirstOrDefault(x => x.PackageId == id);
-            return packages;
-        }
+                .FirstOrDefaultAsync(x => x.PackageId == id);
 
-        public void Create(Packages pkg)
-        {
-            _context.Packages.Add(pkg);
-        }
-
-        public void Update(Packages pkg)
-        {
-            _context.Packages.Update(pkg);
-        }
-
-        public void Delete(Guid id)
-        {
-            var pkg = GetById(id);
-            if (pkg != null)
+            if (package?.PackageDestinations != null)
             {
-                _context.Packages.Remove(pkg);
+                package.PackageDestinations = package.PackageDestinations
+                    .OrderBy(pd => pd.SequenceNo)
+                    .ToList();
+            }
+
+            return package;
+        }
+
+        public async Task CreateAsync(Packages pkg, List<Guid> destinationIds)
+        {
+            await _context.Packages.AddAsync(pkg);
+            await AddDestinationsAsync(pkg.PackageId, destinationIds);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> UpdateAsync(Packages pkg, List<Guid> destinationIds)
+        {
+            var existing = await _context.Packages.FindAsync(pkg.PackageId);
+            if (existing == null) return false;
+
+            existing.Title = pkg.Title;
+            existing.ImagePath = pkg.ImagePath;
+            existing.PricePerPerson = pkg.PricePerPerson;
+            existing.DurationDays = pkg.DurationDays;
+            existing.MaxGroupSize = pkg.MaxGroupSize;
+            existing.TourStartDate = pkg.TourStartDate;
+            existing.TourEndDate = pkg.TourEndDate;
+            existing.Details = pkg.Details;
+            existing.IsActive = pkg.IsActive;
+
+            var currentLinks = await _context.PackageDestinations
+                .Where(pd => pd.PackageId == pkg.PackageId)
+                .ToListAsync();
+            _context.PackageDestinations.RemoveRange(currentLinks);
+
+            await AddDestinationsAsync(pkg.PackageId, destinationIds);
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        private async Task AddDestinationsAsync(Guid packageId, List<Guid> destinationIds)
+        {
+            for (int i = 0; i < destinationIds.Count; i++)
+            {
+                await _context.PackageDestinations.AddAsync(new PackageDestinations
+                {
+                    Id = Guid.NewGuid(),
+                    PackageId = packageId,
+                    DestinationId = destinationIds[i],
+                    SequenceNo = i + 1
+                });
             }
         }
 
-        public void Save()
+        public async Task<bool> DeactivateAsync(Guid id)
         {
-            _context.SaveChanges();
+            var pkg = await _context.Packages.FindAsync(id);
+            if (pkg == null) return false;
+
+            pkg.IsActive = false;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> HasBookingsAsync(Guid id)
+        {
+            return await _context.Bookings.AnyAsync(b => b.PackageId == id);
+        }
+
+        public async Task<bool> DeleteAsync(Guid id)
+        {
+            if (await HasBookingsAsync(id)) return false;
+
+            var pkg = await _context.Packages.FindAsync(id);
+            if (pkg == null) return false;
+
+            _context.Packages.Remove(pkg);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

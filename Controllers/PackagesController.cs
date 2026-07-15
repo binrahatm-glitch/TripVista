@@ -1,30 +1,25 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using TripVista.Data;
+using Microsoft.AspNetCore.Mvc;
+using TripVista.Filters;
 using TripVista.Models.DTO;
-using TripVista.Models.Entities;
 using TripVista.Services.Interfaces;
 
 namespace TripVista.Controllers
 {
     public class PackagesController : Controller
     {
-       
         private readonly IPackageDAO _packageDAO;
-        private readonly IUserDAO _userDAO;
         private readonly IBookingDAO _bookingDAO;
-        
-        public PackagesController(IPackageDAO packageDAO, IUserDAO userDAO, IBookingDAO bookingDAO)
+
+        public PackagesController(IPackageDAO packageDAO, IBookingDAO bookingDAO)
         {
             _packageDAO = packageDAO;
-            _userDAO = userDAO;
             _bookingDAO = bookingDAO;
         }
 
         [HttpGet]
-        public IActionResult ViewDetails(Guid id)
+        public async Task<IActionResult> ViewDetails(Guid id)
         {
-            var package = _packageDAO.GetById(id);
-
+            var package = await _packageDAO.GetByIdAsync(id);
             if (package == null)
             {
                 return NotFound();
@@ -34,70 +29,57 @@ namespace TripVista.Controllers
         }
 
         [HttpGet]
-        public IActionResult AddBooking(Guid id)
+        [RequireRole("user")]
+        public async Task<IActionResult> AddBooking(Guid id)
         {
-            Packages? package = _packageDAO.GetById(id);
-
-            if (package == null)
+            var package = await _packageDAO.GetByIdAsync(id);
+            if (package == null || !package.IsActive)
             {
                 return NotFound();
             }
 
-            string email = HttpContext.Session.GetString("email") ?? "";
-            Users? user = _userDAO.GetUserByEmailAsync(email).Result;
-
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            AddBookingViewModel vm = new AddBookingViewModel
+            var vm = new AddBookingViewModel
             {
                 PackageId = package.PackageId,
                 PackageTitle = package.Title,
-                Price = package.Price ?? 0,
-                Discount = package.Discount,
-                Email = user.Email,
-                FullName = user.FullName ?? "",
-                UserId = user.UserId
-
+                PricePerPerson = package.PricePerPerson,
+                MaxGroupSize = package.MaxGroupSize,
+                NumberOfTravelers = 1
             };
-
-
-
 
             return View(vm);
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult AddBooking(AddBookingViewModel vm)
+        [RequireRole("user")]
+        public async Task<IActionResult> AddBooking(AddBookingViewModel vm)
         {
+            var package = await _packageDAO.GetByIdAsync(vm.PackageId);
+            if (package == null || !package.IsActive)
+            {
+                return NotFound();
+            }
+
+            vm.PackageTitle = package.Title;
+            vm.PricePerPerson = package.PricePerPerson;
+            vm.MaxGroupSize = package.MaxGroupSize;
+
             if (!ModelState.IsValid)
                 return View(vm);
 
-            var finalPrice = (vm.Price - vm.Discount) * vm.NumberOfPersons;
-
-            var booking = new Bookings
+            if (vm.NumberOfTravelers > package.MaxGroupSize)
             {
-                BookingId = Guid.NewGuid(),
-                PackageId = vm.PackageId,
-                UserId = vm.UserId,
-                TravelDate = vm.TravelDate,
-                TravelersCount = vm.NumberOfPersons,
-                TotalPrice = finalPrice
-            };
+                ModelState.AddModelError(nameof(vm.NumberOfTravelers), $"This package allows a maximum of {package.MaxGroupSize} travelers.");
+                return View(vm);
+            }
 
-            _bookingDAO.Create(booking);
-            _bookingDAO.Save();
+            var userId = Guid.Parse(HttpContext.Session.GetString("id")!);
+            var totalPrice = package.PricePerPerson * vm.NumberOfTravelers;
 
-            return RedirectToAction("Confirmation");
-        }
+            var booking = await _bookingDAO.CreateConfirmedBookingAsync(userId, package.PackageId, vm.NumberOfTravelers, totalPrice);
 
-        public IActionResult Confirmation()
-        {
-            return View();
+            return RedirectToAction("AddTravelerDetails", "Booking", new { bookingId = booking.BookingId });
         }
     }
 }

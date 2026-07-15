@@ -1,4 +1,4 @@
-﻿@model TripVista.Models.Entities.Packages
+@model TripVista.Models.Entities.Packages
 @{
     Layout = null;
 }
@@ -9,7 +9,7 @@
     <title>Details</title>
     <!-- Bootstrap -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-    
+
 </head>
 <body>
 
@@ -35,13 +35,28 @@
                             <strong>Duration:</strong> @Model.DurationDays days
                         </p>
 
-                        <p class="text-muted mb-3">
-                            <strong>Price:</strong> $@Model.Price
-                            @if (Model.Discount > 0)
-                            {
-                                <span class="badge bg-success ms-2">@Model.Discount% Off</span>
-                            }
+                        <p class="text-muted mb-1">
+                            <strong>Price per person:</strong> PKR @Model.PricePerPerson
                         </p>
+
+                        <p class="text-muted mb-1">
+                            <strong>Max Group Size:</strong> @Model.MaxGroupSize travelers
+                        </p>
+
+                        <p class="text-muted mb-3">
+                            <strong>Tour Dates:</strong> @Model.TourStartDate.ToString("dd MMM yyyy") - @Model.TourEndDate.ToString("dd MMM yyyy")
+                        </p>
+
+                        @if (Model.PackageDestinations != null && Model.PackageDestinations.Any())
+                        {
+                            <p class="text-muted mb-1"><strong>Itinerary:</strong></p>
+                            <ol class="mb-3">
+                                @foreach (var stop in Model.PackageDestinations)
+                                {
+                                    <li>@stop.Destination?.Name</li>
+                                }
+                            </ol>
+                        }
 
                         <p class="card-text">@Model.Details</p>
 
@@ -57,12 +72,11 @@
                             }
                         </p>
 
-                        <p class="text-muted mt-2">
-                            <small>Created at: @Model.CreatedAt.ToString("yyyy-MM-dd")</small>
-                        </p>
-
-                        <a href="/Packages/Index" class="btn btn-secondary mt-3">Back to Packages</a>
-                        <a asp-action="AddBooking" asp-controller="Packages" asp-route-id="@Model.PackageId" class="btn btn-success mt-3">Book Now</a>
+                        <a asp-controller="User" asp-action="UserDashboard" class="btn btn-secondary mt-3">Back to Packages</a>
+                        @if (Model.IsActive)
+                        {
+                            <a asp-action="AddBooking" asp-controller="Packages" asp-route-id="@Model.PackageId" class="btn btn-success mt-3">Book Now</a>
+                        }
                     </div>
                 </div>
             </div>

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,7 @@ namespace TripVista.Services
     public class UserDAO : IUserDAO
     {
         private readonly SmartTripContext _context;
+        private readonly PasswordHasher<Users> _passwordHasher = new();
 
         public UserDAO(SmartTripContext context)
         {
@@ -22,6 +24,7 @@ namespace TripVista.Services
         public async Task<Users> CreateUserAsync(Users user)
         {
             user.CreatedAt = DateTime.Now;
+            user.Password = _passwordHasher.HashPassword(user, user.Password);
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
             return user;
@@ -32,8 +35,6 @@ namespace TripVista.Services
         {
             return await _context.Users
                 .Include(u => u.Bookings)
-                .Include(u => u.Reviews)
-                .Include(u => u.UserSubmissions)
                 .FirstOrDefaultAsync(u => u.UserId == id);
         }
 
@@ -59,6 +60,7 @@ namespace TripVista.Services
             existing.Email = user.Email;
             existing.Password = user.Password;
             existing.Role = user.Role;
+            existing.IsEmailVerified = user.IsEmailVerified;
 
             await _context.SaveChangesAsync();
             return true;
@@ -78,8 +80,29 @@ namespace TripVista.Services
         // Validate Login
         public async Task<Users?> ValidateLoginAsync(string email, string password)
         {
-            return await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == email && u.Password == password);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null) return null;
+
+            PasswordVerificationResult result;
+            try
+            {
+                result = _passwordHasher.VerifyHashedPassword(user, user.Password, password);
+            }
+            catch (FormatException)
+            {
+                // Stored value isn't a valid hash (e.g. legacy/plaintext data) - treat as invalid credentials.
+                return null;
+            }
+
+            if (result == PasswordVerificationResult.Failed) return null;
+
+            if (result == PasswordVerificationResult.SuccessRehashNeeded)
+            {
+                user.Password = _passwordHasher.HashPassword(user, password);
+                await _context.SaveChangesAsync();
+            }
+
+            return user;
         }
 
         // Change Password
@@ -88,7 +111,7 @@ namespace TripVista.Services
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return false;
 
-            user.Password = newPassword;
+            user.Password = _passwordHasher.HashPassword(user, newPassword);
             await _context.SaveChangesAsync();
             return true;
         }

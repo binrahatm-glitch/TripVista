@@ -22,25 +22,52 @@ namespace TripVista.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("TripVista.Models.Entities.BookingTravelers", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Age")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CNICOrPassportNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.ToTable("booking_travelers", (string)null);
+                });
+
             modelBuilder.Entity("TripVista.Models.Entities.Bookings", b =>
                 {
                     b.Property<Guid>("BookingId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("AreTravelerDetailsSubmitted")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("BookingDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("CancelledAt")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid>("PackageId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("PaymentMethod")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PaymentStatus")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -48,9 +75,6 @@ namespace TripVista.Migrations
 
                     b.Property<decimal?>("TotalPrice")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime?>("TravelDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<int>("TravelersCount")
                         .HasColumnType("int");
@@ -73,49 +97,78 @@ namespace TripVista.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<decimal?>("AverageCostMax")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal?>("AverageCostMin")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("BestTimeToVisit")
+                    b.Property<string>("AdminRemarks")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Category")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ImagePath")
+                    b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<decimal?>("Latitude")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Location")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<decimal?>("Longitude")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReviewedByAdminId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("SubmittedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("DestinationId");
 
+                    b.HasIndex("ReviewedByAdminId");
+
+                    b.HasIndex("SubmittedByUserId");
+
                     b.ToTable("destinations", (string)null);
+                });
+
+            modelBuilder.Entity("TripVista.Models.Entities.OtpVerification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("OtpCode")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("nvarchar(6)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("otp_verifications", (string)null);
                 });
 
             modelBuilder.Entity("TripVista.Models.Entities.PackageDestinations", b =>
@@ -151,13 +204,13 @@ namespace TripVista.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid>("CreatedByAdminId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Details")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("Discount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int?>("DurationDays")
+                    b.Property<int>("DurationDays")
                         .HasColumnType("int");
 
                     b.Property<string>("ImagePath")
@@ -166,7 +219,10 @@ namespace TripVista.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<decimal?>("Price")
+                    b.Property<int>("MaxGroupSize")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PricePerPerson")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Title")
@@ -174,91 +230,95 @@ namespace TripVista.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<DateTime>("TourEndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("TourStartDate")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("PackageId");
+
+                    b.HasIndex("CreatedByAdminId");
 
                     b.ToTable("packages", (string)null);
                 });
 
-            modelBuilder.Entity("TripVista.Models.Entities.Reviews", b =>
+            modelBuilder.Entity("TripVista.Models.Entities.PollOptions", b =>
                 {
-                    b.Property<Guid>("ReviewId")
+                    b.Property<Guid>("PollOptionId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Comment")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("OptionText")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("DestinationId")
+                    b.Property<Guid>("PollId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
+                    b.HasKey("PollOptionId");
 
-                    b.Property<string>("Sentiment")
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
+                    b.HasIndex("PollId");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("ReviewId");
-
-                    b.HasIndex("DestinationId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("reviews", (string)null);
+                    b.ToTable("poll_options", (string)null);
                 });
 
-            modelBuilder.Entity("TripVista.Models.Entities.UserSubmissions", b =>
+            modelBuilder.Entity("TripVista.Models.Entities.PollVotes", b =>
                 {
-                    b.Property<Guid>("SubmissionId")
+                    b.Property<Guid>("PollVoteId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("AdminComment")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<Guid>("PollId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime?>("ApprovedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Category")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ImagePath")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Location")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<Guid>("PollOptionId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("SubmissionId");
+                    b.Property<DateTime>("VotedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("PollVoteId");
+
+                    b.HasIndex("PollOptionId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("user_submissions", (string)null);
+                    b.HasIndex("PollId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("poll_votes", (string)null);
+                });
+
+            modelBuilder.Entity("TripVista.Models.Entities.Polls", b =>
+                {
+                    b.Property<Guid>("PollId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByAdminId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Question")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.HasKey("PollId");
+
+                    b.HasIndex("CreatedByAdminId");
+
+                    b.ToTable("polls", (string)null);
                 });
 
             modelBuilder.Entity("TripVista.Models.Entities.Users", b =>
@@ -282,6 +342,9 @@ namespace TripVista.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<bool>("IsEmailVerified")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Password")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -296,12 +359,23 @@ namespace TripVista.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("TripVista.Models.Entities.BookingTravelers", b =>
+                {
+                    b.HasOne("TripVista.Models.Entities.Bookings", "Booking")
+                        .WithMany("BookingTravelers")
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+                });
+
             modelBuilder.Entity("TripVista.Models.Entities.Bookings", b =>
                 {
                     b.HasOne("TripVista.Models.Entities.Packages", "Package")
                         .WithMany("Bookings")
                         .HasForeignKey("PackageId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("TripVista.Models.Entities.Users", "User")
@@ -313,6 +387,24 @@ namespace TripVista.Migrations
                     b.Navigation("Package");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TripVista.Models.Entities.Destinations", b =>
+                {
+                    b.HasOne("TripVista.Models.Entities.Users", "ReviewedByAdmin")
+                        .WithMany()
+                        .HasForeignKey("ReviewedByAdminId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("TripVista.Models.Entities.Users", "SubmittedByUser")
+                        .WithMany("SubmittedDestinations")
+                        .HasForeignKey("SubmittedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ReviewedByAdmin");
+
+                    b.Navigation("SubmittedByUser");
                 });
 
             modelBuilder.Entity("TripVista.Models.Entities.PackageDestinations", b =>
@@ -320,7 +412,7 @@ namespace TripVista.Migrations
                     b.HasOne("TripVista.Models.Entities.Destinations", "Destination")
                         .WithMany("PackageDestinations")
                         .HasForeignKey("DestinationId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("TripVista.Models.Entities.Packages", "Package")
@@ -334,41 +426,74 @@ namespace TripVista.Migrations
                     b.Navigation("Package");
                 });
 
-            modelBuilder.Entity("TripVista.Models.Entities.Reviews", b =>
+            modelBuilder.Entity("TripVista.Models.Entities.Packages", b =>
                 {
-                    b.HasOne("TripVista.Models.Entities.Destinations", "Destination")
-                        .WithMany("Reviews")
-                        .HasForeignKey("DestinationId")
+                    b.HasOne("TripVista.Models.Entities.Users", "CreatedByAdmin")
+                        .WithMany()
+                        .HasForeignKey("CreatedByAdminId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByAdmin");
+                });
+
+            modelBuilder.Entity("TripVista.Models.Entities.PollOptions", b =>
+                {
+                    b.HasOne("TripVista.Models.Entities.Polls", "Poll")
+                        .WithMany("Options")
+                        .HasForeignKey("PollId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Poll");
+                });
+
+            modelBuilder.Entity("TripVista.Models.Entities.PollVotes", b =>
+                {
+                    b.HasOne("TripVista.Models.Entities.Polls", "Poll")
+                        .WithMany("Votes")
+                        .HasForeignKey("PollId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TripVista.Models.Entities.PollOptions", "PollOption")
+                        .WithMany("Votes")
+                        .HasForeignKey("PollOptionId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("TripVista.Models.Entities.Users", "User")
-                        .WithMany("Reviews")
+                        .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Destination");
+                    b.Navigation("Poll");
+
+                    b.Navigation("PollOption");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("TripVista.Models.Entities.UserSubmissions", b =>
+            modelBuilder.Entity("TripVista.Models.Entities.Polls", b =>
                 {
-                    b.HasOne("TripVista.Models.Entities.Users", "User")
-                        .WithMany("UserSubmissions")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("TripVista.Models.Entities.Users", "CreatedByAdmin")
+                        .WithMany()
+                        .HasForeignKey("CreatedByAdminId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("CreatedByAdmin");
+                });
+
+            modelBuilder.Entity("TripVista.Models.Entities.Bookings", b =>
+                {
+                    b.Navigation("BookingTravelers");
                 });
 
             modelBuilder.Entity("TripVista.Models.Entities.Destinations", b =>
                 {
                     b.Navigation("PackageDestinations");
-
-                    b.Navigation("Reviews");
                 });
 
             modelBuilder.Entity("TripVista.Models.Entities.Packages", b =>
@@ -378,13 +503,23 @@ namespace TripVista.Migrations
                     b.Navigation("PackageDestinations");
                 });
 
+            modelBuilder.Entity("TripVista.Models.Entities.PollOptions", b =>
+                {
+                    b.Navigation("Votes");
+                });
+
+            modelBuilder.Entity("TripVista.Models.Entities.Polls", b =>
+                {
+                    b.Navigation("Options");
+
+                    b.Navigation("Votes");
+                });
+
             modelBuilder.Entity("TripVista.Models.Entities.Users", b =>
                 {
                     b.Navigation("Bookings");
 
-                    b.Navigation("Reviews");
-
-                    b.Navigation("UserSubmissions");
+                    b.Navigation("SubmittedDestinations");
                 });
 #pragma warning restore 612, 618
         }

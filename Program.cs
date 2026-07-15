@@ -10,12 +10,16 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<SmartTripContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SmartTripConn")));
 
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+builder.Services.AddScoped<IOtpDAO, OtpDAO>();
 
 builder.Services.AddScoped<IUserDAO, UserDAO>();
 builder.Services.AddScoped<IDestinationDAO, DestinationDAO>();
 builder.Services.AddScoped<IPackageDAO, PackageDAO>();
-builder.Services.AddScoped<IUserSubmissionDAO, UserSubmissionDAO>();
 builder.Services.AddScoped<IBookingDAO, BookingsDAO>();
+builder.Services.AddScoped<IPollDAO, PollDAO>();
+builder.Services.AddScoped<IBudgetEstimationService, RuleBasedBudgetEstimationService>();
 
 
 

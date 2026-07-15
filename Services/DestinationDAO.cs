@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TripVista.Data;
 using TripVista.Models.Entities;
 using TripVista.Services.Interfaces;
@@ -14,40 +14,81 @@ namespace TripVista.Services
             _context = context;
         }
 
-        public List<Destinations> GetAll()
+        public async Task<Destinations> CreateAsync(Destinations destination)
         {
-            return _context.Destinations.ToList();
+            await _context.Destinations.AddAsync(destination);
+            await _context.SaveChangesAsync();
+            return destination;
         }
 
-        
-
-        public Destinations? GetById(Guid id)
+        public async Task<Destinations?> GetByIdAsync(Guid id)
         {
-            return _context.Destinations.FirstOrDefault(x => x.DestinationId == id);
+            return await _context.Destinations
+                .Include(d => d.SubmittedByUser)
+                .FirstOrDefaultAsync(d => d.DestinationId == id);
         }
 
-        public void Create(Destinations dest)
+        public async Task<List<Destinations>> GetByUserIdAsync(Guid userId)
         {
-            _context.Destinations.Add(dest);
+            return await _context.Destinations
+                .Where(d => d.SubmittedByUserId == userId)
+                .OrderByDescending(d => d.SubmittedAt)
+                .ToListAsync();
         }
 
-        public void Update(Destinations dest)
+        public async Task<List<Destinations>> GetApprovedAsync()
         {
-            _context.Destinations.Update(dest);
+            return await _context.Destinations
+                .Where(d => d.Status == "Approved")
+                .OrderByDescending(d => d.ReviewedAt)
+                .ToListAsync();
         }
 
-        public void Delete(Guid id)
+        public async Task<List<Destinations>> GetPendingAsync()
         {
-            var dest = GetById(id);
-            if (dest != null)
-            {
-                _context.Destinations.Remove(dest);
-            }
+            return await _context.Destinations
+                .Include(d => d.SubmittedByUser)
+                .Where(d => d.Status == "Pending")
+                .OrderBy(d => d.SubmittedAt)
+                .ToListAsync();
         }
 
-        public void Save()
+        public async Task<List<Destinations>> GetReviewedAsync()
         {
-            _context.SaveChanges();
+            return await _context.Destinations
+                .Include(d => d.SubmittedByUser)
+                .Include(d => d.ReviewedByAdmin)
+                .Where(d => d.Status == "Approved" || d.Status == "Rejected")
+                .OrderByDescending(d => d.ReviewedAt)
+                .ToListAsync();
+        }
+
+        public async Task<bool> ApproveAsync(Guid id, Guid adminId, string? remarks)
+        {
+            var destination = await _context.Destinations.FindAsync(id);
+            if (destination == null || destination.Status != "Pending") return false;
+
+            destination.Status = "Approved";
+            destination.AdminRemarks = remarks;
+            destination.ReviewedByAdminId = adminId;
+            destination.ReviewedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> RejectAsync(Guid id, Guid adminId, string remarks)
+        {
+            var destination = await _context.Destinations.FindAsync(id);
+            if (destination == null || destination.Status != "Pending") return false;
+
+            destination.Status = "Rejected";
+            destination.AdminRemarks = remarks;
+            destination.ReviewedByAdminId = adminId;
+            destination.ReviewedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

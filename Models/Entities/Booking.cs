@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TripVista.Models.Entities
@@ -13,16 +13,17 @@ namespace TripVista.Models.Entities
 
         public int TravelersCount { get; set; } = 1;
         public DateTime BookingDate { get; set; } = DateTime.UtcNow;
-        public DateTime? TravelDate { get; set; }
 
+        [Column(TypeName = "decimal(18,2)")]
         public decimal? TotalPrice { get; set; }
 
         public string Status { get; set; } = "Pending"; // Pending, Confirmed, Cancelled, Completed
-        public string PaymentStatus { get; set; } = "Pending"; // Pending, Paid, Refunded
-        public string PaymentMethod { get; set; } = "None"; // Card, Cash, Online
+        public bool AreTravelerDetailsSubmitted { get; set; } = false;
+        public DateTime? CancelledAt { get; set; }
 
         // Navigation
         public Users? User { get; set; }
         public Packages? Package { get; set; }
+        public ICollection<BookingTravelers>? BookingTravelers { get; set; }
     }
 }

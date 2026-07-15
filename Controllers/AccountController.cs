@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Net;
-using System.Net.Mail;
+using Microsoft.AspNetCore.Mvc;
 using TripVista.Models.DTO;
 using TripVista.Models.Entities;
 using TripVista.Services.Interfaces;
@@ -9,11 +7,18 @@ namespace TripVista.Controllers
 {
     public class AccountController : Controller
     {
-        
+        private static readonly TimeSpan OtpValidity = TimeSpan.FromMinutes(10);
+        private static readonly TimeSpan OtpResendCooldown = TimeSpan.FromSeconds(60);
+
         private readonly IUserDAO _userService;
-        public AccountController(IUserDAO userService)
+        private readonly IOtpDAO _otpService;
+        private readonly IEmailService _emailService;
+
+        public AccountController(IUserDAO userService, IOtpDAO otpService, IEmailService emailService)
         {
             _userService = userService;
+            _otpService = otpService;
+            _emailService = emailService;
         }
 
         [HttpGet]
@@ -23,31 +28,37 @@ namespace TripVista.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(LoginViewModel user)
+        public async Task<IActionResult> Login(LoginViewModel model)
         {
-            Users? existingUser =  await _userService.ValidateLoginAsync(user.Email, user.Password);
+            if (!ModelState.IsValid)
+                return View(model);
 
-            if (existingUser != null)
+            Users? existingUser = await _userService.ValidateLoginAsync(model.Email, model.Password);
+
+            if (existingUser == null)
             {
-                HttpContext.Session.SetString("name", existingUser.FullName?.ToString() ?? string.Empty);
-                HttpContext.Session.SetString("id", existingUser.UserId.ToString() ?? string.Empty);
-                HttpContext.Session.SetString("email", existingUser.Email?.ToString() ?? string.Empty);
-                if (existingUser.Role == "user")
-                { 
-                    return RedirectToAction("UserDashboard", "User");
-                }
-                else if (existingUser.Role == "admin")
-                {
-                    return RedirectToAction("AdminDashboard", "Admin");
-                }
+                ViewBag.Error = "Incorrect Credentials";
+                return View(model);
             }
 
-            ViewBag.Error = "Incorrect Credentials";
-            return View();
+            if (!existingUser.IsEmailVerified)
+            {
+                ViewBag.Error = "Please verify your email before logging in.";
+                return View(model);
+            }
+
+            HttpContext.Session.SetString("name", existingUser.FullName ?? string.Empty);
+            HttpContext.Session.SetString("id", existingUser.UserId.ToString());
+            HttpContext.Session.SetString("email", existingUser.Email);
+            HttpContext.Session.SetString("role", existingUser.Role);
+
+            if (string.Equals(existingUser.Role, "admin", StringComparison.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("AdminDashboard", "Admin");
+            }
+
+            return RedirectToAction("UserDashboard", "User");
         }
-
-
-
 
         [HttpGet]
         public IActionResult Register()
@@ -56,100 +67,100 @@ namespace TripVista.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Register(RegisterViewModel user)
+        public async Task<IActionResult> Register(RegisterViewModel model)
         {
+            if (!ModelState.IsValid)
+                return View(model);
 
-            Users? oldUser =  await _userService.GetUserByEmailAsync(user.Email);
-            if (oldUser != null)
+            Users? existing = await _userService.GetUserByEmailAsync(model.Email);
+            if (existing != null)
             {
-                ViewBag.Error = "Email Already exist";
-                return View(user);
+                ViewBag.Error = "Email already exists";
+                return View(model);
             }
 
+            await _userService.CreateUserAsync(new Users
+            {
+                UserId = Guid.NewGuid(),
+                FullName = model.FullName,
+                Email = model.Email,
+                Password = model.Password, // hashed inside CreateUserAsync
+                Role = "user",
+                IsEmailVerified = false
+            });
 
-            Random r = new Random();
-            int otp = r.Next(100000, 999999);
+            await IssueOtpAsync(model.Email);
 
-            TempData["otp"] = otp.ToString();
-            TempData["email"] = user.Email;
-            TempData["name"] = user.FullName;
-            TempData["password"] = user.Password;
-
-
-            SendOTP(user.Email, otp.ToString());
-
-
-
-            return RedirectToAction("VerifyEmail");
+            return RedirectToAction("VerifyEmail", new { email = model.Email });
         }
 
         [HttpGet]
-        public IActionResult VerifyEmail()
+        public IActionResult VerifyEmail(string email)
         {
-            EmailVerifyViewModel m = new EmailVerifyViewModel();
-            m.Email = TempData["email"]?.ToString();
-            TempData.Keep(); 
-            return View(m);
+            return View(new EmailVerifyViewModel { Email = email });
         }
 
         [HttpPost]
         public async Task<IActionResult> VerifyEmail(EmailVerifyViewModel model)
         {
-            string? otpStored = TempData["otp"]?.ToString();
-            TempData.Keep();
-
-            if (model.OtpCode == otpStored)
+            if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.OtpCode))
             {
-                TempData["msg"] = "Email verified successfully!";
-                string? name = TempData["name"]?.ToString();
-                string? email = TempData["email"]?.ToString();
-                string? password = TempData["password"]?.ToString();
-
-                if (string.IsNullOrWhiteSpace(name) ||
-                    string.IsNullOrWhiteSpace(email) ||
-                    string.IsNullOrWhiteSpace(password))
-                {
-                    ViewBag.Error = "Registration data expired. Please register again.";
-                    return RedirectToAction("Register");
-                }
-
-
-                await _userService.CreateUserAsync(new Users
-                {
-                    FullName = name,
-                    Email = email ?? string.Empty,
-                    Password = password
-                });
-
-
-                return RedirectToAction("Login");
+                ViewBag.Error = "Invalid request.";
+                return View(model);
             }
 
-            ViewBag.Error = "Invalid OTP. Try again.";
-            return View(model);
+            var validOtp = await _otpService.GetValidAsync(model.Email, model.OtpCode);
+            if (validOtp == null)
+            {
+                ViewBag.Error = "Invalid or expired OTP. Try again.";
+                return View(model);
+            }
+
+            var user = await _userService.GetUserByEmailAsync(model.Email);
+            if (user == null)
+            {
+                ViewBag.Error = "Registration data not found. Please register again.";
+                return RedirectToAction("Register");
+            }
+
+            await _otpService.MarkUsedAsync(validOtp);
+            user.IsEmailVerified = true;
+            await _userService.UpdateUserAsync(user);
+
+            TempData["msg"] = "Email verified successfully! You can now log in.";
+            return RedirectToAction("Login");
         }
 
-        public void SendOTP(string email, string otpCode)
+        [HttpPost]
+        public async Task<IActionResult> ResendOtp(string email)
         {
-            var client = new SmtpClient("smtp.gmail.com", 587)
+            if (string.IsNullOrWhiteSpace(email))
+                return RedirectToAction("Register");
+
+            var latest = await _otpService.GetLatestAsync(email);
+            if (latest != null && DateTime.Now - latest.CreatedAt < OtpResendCooldown)
             {
-                EnableSsl = true,
-                Credentials = new NetworkCredential("tripvista53@gmail.com", "kpbh nghp xytf earj")
-            };
+                var wait = OtpResendCooldown - (DateTime.Now - latest.CreatedAt);
+                TempData["Error"] = $"Please wait {Math.Ceiling(wait.TotalSeconds)}s before requesting another OTP.";
+                return RedirectToAction("VerifyEmail", new { email });
+            }
 
-            var msg = new MailMessage("tripvista53@gmail.com", email);
-            msg.Subject = "Your SmartTrip Email Verification Code";
-            msg.Body = $"Your OTP Code is: {otpCode}";
+            await IssueOtpAsync(email);
+            TempData["msg"] = "A new OTP has been sent to your email.";
+            return RedirectToAction("VerifyEmail", new { email });
+        }
 
-            client.Send(msg);
+        private async Task IssueOtpAsync(string email)
+        {
+            var otpCode = Random.Shared.Next(100000, 999999).ToString();
+            await _otpService.CreateAsync(email, otpCode, OtpValidity);
+            await _emailService.SendAsync(email, "Your TripVista Email Verification Code", $"Your OTP Code is: {otpCode}. It expires in 10 minutes.");
         }
 
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
-            return RedirectToAction("Index","Home");
+            return RedirectToAction("Index", "Home");
         }
-
-
     }
 }

@@ -1,4 +1,4 @@
-﻿@model IEnumerable<TripVista.Models.Entities.Packages>
+@model IEnumerable<TripVista.Models.Entities.Packages>
 
 @{
     Layout = null;
@@ -87,9 +87,9 @@
 
                     <li class="nav-item">
                         <a class="nav-link"
-                           asp-controller="UserSubmission"
-                           asp-action="Submissions">
-                            Applications
+                           asp-controller="Destination"
+                           asp-action="MySubmissions">
+                            My Submissions
                         </a>
                     </li>
 
@@ -98,6 +98,22 @@
                            asp-controller="Booking"
                            asp-action="Bookings">
                             Bookings
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           asp-controller="Poll"
+                           asp-action="Polls">
+                            Polls
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           asp-controller="Budget"
+                           asp-action="PlanTrip">
+                            Plan My Trip
                         </a>
                     </li>
                 </ul>
@@ -157,16 +173,15 @@
             @for (int i = 0; i < Model.Count(); i++)
             {
                 var pkg = Model.ElementAt(i);
-                var firstDest = pkg.PackageDestinations.FirstOrDefault()?.Destination;
 
                 <div class="package-item"
                      style="min-width: 280px; display:@(i < 4 ? "block" : "none")">
 
                     <div class="card h-100">
 
-                        @if (firstDest?.ImagePath != null)
+                        @if (!string.IsNullOrEmpty(pkg.ImagePath))
                         {
-                            <img src="@firstDest.ImagePath"
+                            <img src="@pkg.ImagePath"
                                  class="card-img-top"
                                  style="height:160px; object-fit:cover;" />
                         }
@@ -182,19 +197,16 @@
 
                             <div class="d-flex justify-content-between small mb-2">
                                 <span class="badge badge-price">
-                                    PKR @pkg.Price
+                                    PKR @pkg.PricePerPerson
                                 </span>
                                 <span class="text-muted">
                                     @pkg.DurationDays Days
                                 </span>
                             </div>
 
-                            @if (firstDest != null)
-                            {
-                                <p class="small text-muted mb-2">
-                                    Destination: @firstDest.Name
-                                </p>
-                            }
+                            <p class="small text-muted mb-2">
+                                @pkg.TourStartDate.ToString("dd MMM yyyy")
+                            </p>
 
                             <a asp-controller="Packages"
                                asp-action="ViewDetails"

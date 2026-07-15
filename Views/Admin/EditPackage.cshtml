@@ -1,0 +1,99 @@
+@model TripVista.Models.DTO.PackageFormViewModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Package</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+</head>
+<body>
+
+    <div class="container mt-5 col-md-8">
+        <h2 class="mb-4">Edit Package</h2>
+
+        <div asp-validation-summary="All" class="text-danger"></div>
+
+        <form asp-action="EditPackage" method="post">
+            <input type="hidden" asp-for="PackageId" />
+
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Details" class="form-label">Description</label>
+                <textarea asp-for="Details" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ImagePath" class="form-label">Image URL</label>
+                <input asp-for="ImagePath" class="form-control" />
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label asp-for="PricePerPerson" class="form-label"></label>
+                    <input asp-for="PricePerPerson" type="number" step="0.01" class="form-control" />
+                    <span asp-validation-for="PricePerPerson" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="DurationDays" class="form-label"></label>
+                    <input asp-for="DurationDays" type="number" class="form-control" />
+                    <span asp-validation-for="DurationDays" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="MaxGroupSize" class="form-label"></label>
+                    <input asp-for="MaxGroupSize" type="number" class="form-control" />
+                    <span asp-validation-for="MaxGroupSize" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label asp-for="TourStartDate" class="form-label"></label>
+                    <input asp-for="TourStartDate" type="date" class="form-control" />
+                    <span asp-validation-for="TourStartDate" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="TourEndDate" class="form-label"></label>
+                    <input asp-for="TourEndDate" type="date" class="form-control" />
+                    <span asp-validation-for="TourEndDate" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-check mb-3">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label asp-for="IsActive" class="form-check-label">Active (visible to users)</label>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Destinations Visited</label>
+                <div class="border rounded p-2" style="max-height: 220px; overflow-y: auto;">
+                    @if (!Model.DestinationOptions.Any())
+                    {
+                        <p class="text-muted small mb-0">No approved destinations yet.</p>
+                    }
+                    @for (int i = 0; i < Model.DestinationOptions.Count; i++)
+                    {
+                        <div class="form-check">
+                            <input type="hidden" asp-for="DestinationOptions[i].DestinationId" />
+                            <input type="hidden" asp-for="DestinationOptions[i].Name" />
+                            <input type="checkbox" asp-for="DestinationOptions[i].Selected" class="form-check-input" />
+                            <label class="form-check-label">@Model.DestinationOptions[i].Name</label>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success">Save Changes</button>
+            <a asp-controller="Admin" asp-action="Packages" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+
+</body>
+</html>

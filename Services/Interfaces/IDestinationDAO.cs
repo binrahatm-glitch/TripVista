@@ -1,14 +1,16 @@
-﻿using TripVista.Models.Entities;
+using TripVista.Models.Entities;
 
 namespace TripVista.Services.Interfaces
 {
     public interface IDestinationDAO
     {
-        List<Destinations> GetAll();
-        Destinations? GetById(Guid id);
-        void Create(Destinations dest);
-        void Update(Destinations dest);
-        void Delete(Guid id);
-        void Save();
+        Task<Destinations> CreateAsync(Destinations destination);
+        Task<Destinations?> GetByIdAsync(Guid id);
+        Task<List<Destinations>> GetByUserIdAsync(Guid userId);
+        Task<List<Destinations>> GetApprovedAsync();
+        Task<List<Destinations>> GetPendingAsync();
+        Task<List<Destinations>> GetReviewedAsync();
+        Task<bool> ApproveAsync(Guid id, Guid adminId, string? remarks);
+        Task<bool> RejectAsync(Guid id, Guid adminId, string remarks);
     }
 }

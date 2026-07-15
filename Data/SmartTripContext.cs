@@ -1,9 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Reflection.Emit;
+using Microsoft.EntityFrameworkCore;
 using TripVista.Models.Entities;
 
 namespace TripVista.Data
@@ -20,12 +15,14 @@ namespace TripVista.Data
         // ============================
         public DbSet<Users> Users { get; set; }
         public DbSet<Destinations> Destinations { get; set; }
-        public DbSet<UserSubmissions> UserSubmissions { get; set; }
         public DbSet<Packages> Packages { get; set; }
         public DbSet<PackageDestinations> PackageDestinations { get; set; }
         public DbSet<Bookings> Bookings { get; set; }
-        public DbSet<Reviews> Reviews { get; set; }
-        
+        public DbSet<BookingTravelers> BookingTravelers { get; set; }
+        public DbSet<OtpVerification> OtpVerifications { get; set; }
+        public DbSet<Polls> Polls { get; set; }
+        public DbSet<PollOptions> PollOptions { get; set; }
+        public DbSet<PollVotes> PollVotes { get; set; }
 
         // ============================
         //     MODEL CONFIGURATION
@@ -45,52 +42,38 @@ namespace TripVista.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Users>()
-                .HasMany(u => u.Reviews)
-                .WithOne(r => r.User)
-                .HasForeignKey(r => r.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            
-
-            modelBuilder.Entity<Users>()
-                .HasMany(u => u.UserSubmissions)
-                .WithOne(s => s.User)
-                .HasForeignKey(s => s.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasMany(u => u.SubmittedDestinations)
+                .WithOne(d => d.SubmittedByUser)
+                .HasForeignKey(d => d.SubmittedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // -----------------------------
             // DESTINATIONS
             // -----------------------------
             modelBuilder.Entity<Destinations>()
-                .ToTable("destinations")
-                .HasMany(d => d.PackageDestinations)
-                .WithOne(pd => pd.Destination)
-                .HasForeignKey(pd => pd.DestinationId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .ToTable("destinations");
 
             modelBuilder.Entity<Destinations>()
-                .HasMany(d => d.Reviews)
-                .WithOne(r => r.Destination)
-                .HasForeignKey(r => r.DestinationId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-           
+                .HasOne(d => d.ReviewedByAdmin)
+                .WithMany()
+                .HasForeignKey(d => d.ReviewedByAdminId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // -----------------------------
             // PACKAGES
             // -----------------------------
             modelBuilder.Entity<Packages>()
                 .ToTable("packages")
-                .HasMany(p => p.PackageDestinations)
-                .WithOne(pd => pd.Package)
-                .HasForeignKey(pd => pd.PackageId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Packages>()
                 .HasMany(p => p.Bookings)
                 .WithOne(b => b.Package)
                 .HasForeignKey(b => b.PackageId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Packages>()
+                .HasOne(p => p.CreatedByAdmin)
+                .WithMany()
+                .HasForeignKey(p => p.CreatedByAdminId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // -----------------------------
             // PACKAGE DESTINATIONS
@@ -98,27 +81,87 @@ namespace TripVista.Data
             modelBuilder.Entity<PackageDestinations>()
                 .ToTable("package_destinations");
 
-            // -----------------------------
-            // USER SUBMISSIONS
-            // -----------------------------
-            modelBuilder.Entity<UserSubmissions>()
-                .ToTable("user_submissions");
+            modelBuilder.Entity<PackageDestinations>()
+                .HasOne(pd => pd.Package)
+                .WithMany(p => p.PackageDestinations)
+                .HasForeignKey(pd => pd.PackageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<PackageDestinations>()
+                .HasOne(pd => pd.Destination)
+                .WithMany(d => d.PackageDestinations)
+                .HasForeignKey(pd => pd.DestinationId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // -----------------------------
             // BOOKINGS
             // -----------------------------
             modelBuilder.Entity<Bookings>()
-                .ToTable("bookings");
+                .ToTable("bookings")
+                .HasMany(b => b.BookingTravelers)
+                .WithOne(t => t.Booking)
+                .HasForeignKey(t => t.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // -----------------------------
-            // REVIEWS
+            // BOOKING TRAVELERS
             // -----------------------------
-            modelBuilder.Entity<Reviews>()
-                .ToTable("reviews");
+            modelBuilder.Entity<BookingTravelers>()
+                .ToTable("booking_travelers");
 
-            
+            // -----------------------------
+            // OTP VERIFICATIONS
+            // -----------------------------
+            modelBuilder.Entity<OtpVerification>()
+                .ToTable("otp_verifications");
 
-            
+            // -----------------------------
+            // POLLS
+            // -----------------------------
+            modelBuilder.Entity<Polls>()
+                .ToTable("polls")
+                .HasMany(p => p.Options)
+                .WithOne(o => o.Poll)
+                .HasForeignKey(o => o.PollId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Polls>()
+                .HasMany(p => p.Votes)
+                .WithOne(v => v.Poll)
+                .HasForeignKey(v => v.PollId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Polls>()
+                .HasOne(p => p.CreatedByAdmin)
+                .WithMany()
+                .HasForeignKey(p => p.CreatedByAdminId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // -----------------------------
+            // POLL OPTIONS
+            // -----------------------------
+            modelBuilder.Entity<PollOptions>()
+                .ToTable("poll_options")
+                .HasMany(o => o.Votes)
+                .WithOne(v => v.PollOption)
+                .HasForeignKey(v => v.PollOptionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // -----------------------------
+            // POLL VOTES
+            // -----------------------------
+            modelBuilder.Entity<PollVotes>()
+                .ToTable("poll_votes");
+
+            modelBuilder.Entity<PollVotes>()
+                .HasOne(v => v.User)
+                .WithMany()
+                .HasForeignKey(v => v.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PollVotes>()
+                .HasIndex(v => new { v.PollId, v.UserId })
+                .IsUnique();
         }
     }
 }

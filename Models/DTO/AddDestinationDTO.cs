@@ -1,16 +1,18 @@
-﻿namespace TripVista.Models.DTO
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
+
+namespace TripVista.Models.DTO
 {
     public class AddDestinationDTO
     {
+        [Required, MaxLength(100)]
         public string Name { get; set; } = string.Empty;
-        public string? Category { get; set; }
+
+        [MaxLength(100)]
         public string? Location { get; set; }
+
         public string? Description { get; set; }
+
         public IFormFile? Image { get; set; }
-        public string? BestTimeToVisit { get; set; }
-        public decimal? Latitude { get; set; }
-        public decimal? Longitude { get; set; }
-        public decimal? AverageCostMin { get; set; }
-        public decimal? AverageCostMax { get; set; }
     }
 }

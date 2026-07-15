@@ -1,15 +1,16 @@
-﻿using TripVista.Models.Entities;
+using TripVista.Models.Entities;
 
 namespace TripVista.Services.Interfaces
 {
     public interface IPackageDAO
     {
-        IEnumerable<Packages> GetAll();
-        Task<List<Packages>> GetAllPackagesWithDestinationsAsync();
-        Packages? GetById(Guid id);
-        void Create(Packages pkg);
-        void Update(Packages pkg);
-        void Delete(Guid id);
-        void Save();
+        Task<List<Packages>> GetAllAsync();
+        Task<List<Packages>> GetActiveAsync();
+        Task<Packages?> GetByIdAsync(Guid id);
+        Task CreateAsync(Packages pkg, List<Guid> destinationIds);
+        Task<bool> UpdateAsync(Packages pkg, List<Guid> destinationIds);
+        Task<bool> DeactivateAsync(Guid id);
+        Task<bool> HasBookingsAsync(Guid id);
+        Task<bool> DeleteAsync(Guid id);
     }
 }
