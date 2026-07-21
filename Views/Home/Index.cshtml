@@ -1,22 +1,175 @@
-﻿@{
-    Layout = null;
+@{
+    ViewData["Title"] = "Home";
+    ViewData["BodyClass"] = "index-page";
+    var isLoggedIn = !string.IsNullOrEmpty(Context.Session.GetString("role"));
 }
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Home</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-</head>
-<body>
+<section id="travel-hero" class="travel-hero section dark-background">
 
-    <div class="container mt-5 text-center">
-        <h1>Welcome to SmartTrip</h1>
-        <p>Your AI Travel Companion</p>
-
-        <a asp-controller ="Account" asp-action="Login" class="btn btn-primary">Login</a>
-        <a asp-controller="Account" asp-action="Register" class="btn btn-success">Register</a>
+    <div class="hero-background">
+        <video autoplay muted loop>
+            <source src="~/theme/assets/img/travel/video-2.mp4" type="video/mp4">
+        </video>
+        <div class="hero-overlay"></div>
     </div>
 
-</body>
-</html>
+    <div class="container position-relative">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="hero-text" data-aos="fade-up" data-aos-delay="100">
+                    <h1 class="hero-title">Discover Your Perfect Journey</h1>
+                    <p class="hero-subtitle">Explore curated destinations, plan trips that fit your budget, and book unforgettable travel packages &mdash; all in one place with TripVista.</p>
+                    <div class="hero-buttons">
+                        @if (isLoggedIn)
+                        {
+                            <a asp-controller="User" asp-action="UserDashboard" class="btn btn-primary me-3">Browse Packages</a>
+                            <a asp-controller="Destination" asp-action="Destinations" class="btn btn-outline">Explore Destinations</a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Account" asp-action="Register" class="btn btn-primary me-3">Get Started</a>
+                            <a asp-controller="Account" asp-action="Login" class="btn btn-outline">Login</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<section id="why-us" class="why-us section">
+
+    <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+        <div class="row align-items-center mb-5">
+            <div class="col-lg-6" data-aos="fade-right" data-aos-delay="200">
+                <div class="content">
+                    <h3>Travel Smarter, Not Harder</h3>
+                    <p>TripVista brings together real destinations submitted by travelers, curated packages, and a smart budget planner so you can go from idea to itinerary without the guesswork.</p>
+                    <p>Whether you're chasing mountains, beaches, or city lights, our community-driven destination list and admin-curated packages help you decide with confidence.</p>
+                </div>
+            </div>
+            <div class="col-lg-6" data-aos="fade-left" data-aos-delay="300">
+                <div class="about-image">
+                    <img src="~/theme/assets/img/travel/showcase-8.webp" alt="Travel Experience" class="img-fluid rounded-4">
+                </div>
+            </div>
+        </div>
+
+        <div class="why-choose-section">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center mb-5" data-aos="fade-up" data-aos-delay="100">
+                    <h3>Why Choose TripVista</h3>
+                    <p>Everything you need to plan your next trip, in one platform.</p>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-geo-alt-fill"></i>
+                        </div>
+                        <h4>Real Destinations</h4>
+                        <p>Browse destinations submitted and reviewed by real travelers, not just stock listings.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="250">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-cash"></i>
+                        </div>
+                        <h4>Budget Planning</h4>
+                        <p>Get an instant trip cost estimate tailored to your budget, duration, and travelers.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-suitcase-fill"></i>
+                        </div>
+                        <h4>Curated Packages</h4>
+                        <p>Book ready-made travel packages with clear pricing, itineraries, and group sizes.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="350">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-bar-chart-fill"></i>
+                        </div>
+                        <h4>Community Polls</h4>
+                        <p>Vote on upcoming destinations and packages, and help shape what TripVista offers next.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h4>Simple Bookings</h4>
+                        <p>Track your bookings, add traveler details, and manage cancellations from one dashboard.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="450">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-headset"></i>
+                        </div>
+                        <h4>Always Improving</h4>
+                        <p>Every submission, vote, and booking helps us build a better travel experience.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</section>
+
+<section id="call-to-action" class="call-to-action section light-background">
+
+    <div class="container" data-aos="fade-up" data-aos-delay="100">
+
+        <div class="hero-content" data-aos="zoom-in" data-aos-delay="200">
+            <div class="content-wrapper">
+                <h2>Ready to Plan Your Next Adventure?</h2>
+                <p>Create an account to submit destinations, plan your budget, and book your next trip with TripVista.</p>
+
+                <div class="action-section">
+                    <div class="main-actions">
+                        @if (isLoggedIn)
+                        {
+                            <a asp-controller="Destination" asp-action="Destinations" class="btn btn-explore">
+                                <i class="bi bi-compass"></i>
+                                Explore Destinations
+                            </a>
+                            <a asp-controller="Budget" asp-action="PlanTrip" class="btn btn-deals">
+                                <i class="bi bi-cash"></i>
+                                Plan My Trip
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Account" asp-action="Register" class="btn btn-explore">
+                                <i class="bi bi-compass"></i>
+                                Get Started
+                            </a>
+                            <a asp-controller="Account" asp-action="Login" class="btn btn-deals">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                                Login
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</section>

@@ -1,0 +1,55 @@
+/* Site-wide overrides so plain Bootstrap components (used on pages with no direct
+   Tour-theme template, e.g. auth/forms) match the theme's accent color and card language. */
+
+.btn-primary {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: color-mix(in srgb, var(--accent-color), black 15%);
+    border-color: color-mix(in srgb, var(--accent-color), black 15%);
+}
+
+.btn-outline-primary {
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: var(--contrast-color);
+}
+
+a {
+    color: var(--accent-color);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--accent-color), transparent 75%);
+}
+
+.tv-section {
+    padding: 100px 0 60px;
+}
+
+.tv-card {
+    background: var(--surface-color);
+    border-radius: 15px;
+    border: 1px solid color-mix(in srgb, var(--default-color), transparent 90%);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    padding: 2.5rem;
+}
+
+.tv-badge {
+    display: inline-block;
+    padding: 0.35em 0.9em;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}

@@ -1,80 +1,48 @@
 @model IEnumerable<TripVista.Models.Entities.Destinations>
 
 @{
-    Layout = null;
-    var userName = Context.Session.GetString("name");
+    ViewData["Title"] = "My Submissions";
 }
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <title>TripVista - My Submissions</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f5f7fa; }
-        .card { border: none; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,.06); }
-        .status-badge { font-size: 0.75rem; }
-    </style>
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-        <div class="container">
-            <a class="navbar-brand fw-bold" asp-controller="User" asp-action="UserDashboard">TripVista</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="mainNavbar">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" asp-controller="User" asp-action="UserDashboard">Packages</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Destination" asp-action="Destinations">Destinations</a></li>
-                    <li class="nav-item"><a class="nav-link active fw-semibold" asp-controller="Destination" asp-action="MySubmissions">My Submissions</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Booking" asp-action="Bookings">Bookings</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Poll" asp-action="Polls">Polls</a></li>
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle fw-semibold" href="#" role="button" data-bs-toggle="dropdown">@userName</a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" asp-controller="User" asp-action="Profile">Profile</a></li>
-                            <li><hr class="dropdown-divider" /></li>
-                            <li><a class="dropdown-item text-danger" asp-controller="Account" asp-action="Logout">Logout</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+<div class="page-title dark-background" data-aos="fade" style="background-image: url('@Url.Content("~/theme/assets/img/travel/showcase-7.webp")');">
+    <div class="container position-relative">
+        <h1>My Submissions</h1>
+        <nav class="breadcrumbs">
+            <ol>
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li><a asp-controller="Destination" asp-action="Destinations">Destinations</a></li>
+                <li class="current">My Submissions</li>
+            </ol>
+        </nav>
+    </div>
+</div>
 
-    <div class="container py-4">
-        <h3 class="fw-bold mb-4">My Destination Submissions</h3>
+<section class="tv-section">
+    <div class="container" data-aos="fade-up">
 
         <div class="row">
             @foreach (var submission in Model)
             {
                 <div class="col-lg-6 mb-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h5 class="fw-semibold mb-0">@submission.Name</h5>
-                                <span class="badge status-badge @(submission.Status == "Approved" ? "bg-success" : submission.Status == "Rejected" ? "bg-danger" : "bg-warning text-dark")">
-                                    @submission.Status
-                                </span>
-                            </div>
-                            <p class="text-muted small mb-1">@submission.Location</p>
-                            <p class="small text-secondary mb-2">@submission.Description</p>
-
-                            @if (!string.IsNullOrEmpty(submission.AdminRemarks))
-                            {
-                                <div class="alert alert-light border small mb-2">
-                                    <strong>Admin Remarks:</strong><br />
-                                    @submission.AdminRemarks
-                                </div>
-                            }
-
-                            <p class="small text-muted mb-0">Submitted on: @submission.SubmittedAt.ToString("dd MMM yyyy")</p>
+                    <div class="tv-card h-100">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="fw-semibold mb-0">@submission.Name</h5>
+                            <span class="tv-badge @(submission.Status == "Approved" ? "bg-success text-white" : submission.Status == "Rejected" ? "bg-danger text-white" : "bg-warning text-dark")">
+                                @submission.Status
+                            </span>
                         </div>
+                        <p class="text-muted small mb-1">@submission.Location</p>
+                        <p class="small text-secondary mb-2">@submission.Description</p>
+
+                        @if (!string.IsNullOrEmpty(submission.AdminRemarks))
+                        {
+                            <div class="alert alert-light border small mb-2">
+                                <strong>Admin Remarks:</strong><br />
+                                @submission.AdminRemarks
+                            </div>
+                        }
+
+                        <p class="small text-muted mb-0">Submitted on: @submission.SubmittedAt.ToString("dd MMM yyyy")</p>
                     </div>
                 </div>
             }
@@ -84,8 +52,6 @@
         {
             <div class="alert alert-info">You have not submitted any destinations yet.</div>
         }
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    </div>
+</section>

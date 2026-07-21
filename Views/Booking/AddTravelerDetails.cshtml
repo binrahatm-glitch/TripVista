@@ -1,52 +1,59 @@
 @model TripVista.Models.DTO.AddTravelerDetailsViewModel
 @{
-    Layout = null;
+    ViewData["Title"] = "Traveler Details";
 }
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Traveler Details</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-</head>
-<body>
-
-    <div class="container mt-5 col-md-8">
-        <h2 class="mb-2">Traveler Details</h2>
-        <p class="text-muted">Please add details for all @Model.Travelers.Count traveler(s) on your booking for <strong>@Model.PackageTitle</strong>.</p>
-
-        @if (!ViewData.ModelState.IsValid)
-        {
-            <div class="alert alert-danger" asp-validation-summary="All"></div>
-        }
-
-        <form asp-action="AddTravelerDetails" asp-controller="Booking" method="post">
-            <input type="hidden" asp-for="BookingId" />
-
-            @for (int i = 0; i < Model.Travelers.Count; i++)
-            {
-                <div class="card shadow-sm p-3 mb-3">
-                    <h6>Traveler @(i + 1)</h6>
-                    <div class="row">
-                        <div class="col-md-5 mb-2">
-                            <label class="form-label">Full Name</label>
-                            <input name="Travelers[@i].FullName" value="@Model.Travelers[i].FullName" class="form-control" required />
-                        </div>
-                        <div class="col-md-2 mb-2">
-                            <label class="form-label">Age</label>
-                            <input type="number" name="Travelers[@i].Age" value="@Model.Travelers[i].Age" class="form-control" min="0" max="120" required />
-                        </div>
-                        <div class="col-md-5 mb-2">
-                            <label class="form-label">CNIC / Passport Number</label>
-                            <input name="Travelers[@i].CNICOrPassportNumber" value="@Model.Travelers[i].CNICOrPassportNumber" class="form-control" required />
-                        </div>
-                    </div>
-                </div>
-            }
-
-            <button type="submit" class="btn btn-primary w-100 mb-4">Save Traveler Details</button>
-        </form>
+<div class="page-title dark-background" data-aos="fade" style="background-image: url('@Url.Content("~/theme/assets/img/travel/showcase-7.webp")');">
+    <div class="container position-relative">
+        <h1>Traveler Details</h1>
+        <nav class="breadcrumbs">
+            <ol>
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li><a asp-controller="Booking" asp-action="Bookings">Bookings</a></li>
+                <li class="current">Traveler Details</li>
+            </ol>
+        </nav>
     </div>
+</div>
 
-</body>
-</html>
+<section class="tv-section">
+    <div class="container" data-aos="fade-up">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <p class="text-muted">Please add details for all @Model.Travelers.Count traveler(s) on your booking for <strong>@Model.PackageTitle</strong>.</p>
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger" asp-validation-summary="All"></div>
+                }
+
+                <form asp-action="AddTravelerDetails" asp-controller="Booking" method="post">
+                    <input type="hidden" asp-for="BookingId" />
+
+                    @for (int i = 0; i < Model.Travelers.Count; i++)
+                    {
+                        <div class="tv-card mb-3">
+                            <h6>Traveler @(i + 1)</h6>
+                            <div class="row">
+                                <div class="col-md-5 mb-2">
+                                    <label class="form-label">Full Name</label>
+                                    <input name="Travelers[@i].FullName" value="@Model.Travelers[i].FullName" class="form-control" required />
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                    <label class="form-label">Age</label>
+                                    <input type="number" name="Travelers[@i].Age" value="@Model.Travelers[i].Age" class="form-control" min="0" max="120" required />
+                                </div>
+                                <div class="col-md-5 mb-2">
+                                    <label class="form-label">CNIC / Passport Number</label>
+                                    <input name="Travelers[@i].CNICOrPassportNumber" value="@Model.Travelers[i].CNICOrPassportNumber" class="form-control" required />
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <button type="submit" class="btn btn-primary w-100 mb-4">Save Traveler Details</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
