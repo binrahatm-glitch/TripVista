@@ -53,3 +53,15 @@ a {
     font-size: 0.8rem;
     font-weight: 600;
 }
+
+/* Admin area */
+.tv-card table.table thead th {
+    background-color: var(--accent-color);
+    color: var(--contrast-color);
+    border-color: var(--accent-color);
+    font-weight: 600;
+}
+
+.progress-bar {
+    background-color: var(--accent-color);
+}

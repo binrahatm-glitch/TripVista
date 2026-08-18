@@ -48,7 +48,21 @@
 
             <nav id="navmenu" class="navmenu">
                 <ul>
-                    @if (isLoggedIn)
+                    @if (isAdmin)
+                    {
+                        <li><a asp-controller="Admin" asp-action="AdminDashboard" class="@(IsActive("Admin", "AdminDashboard") ? "active" : "")">Dashboard</a></li>
+                        <li><a asp-controller="Admin" asp-action="Packages" class="@(IsActive("Admin", "Packages") || IsActive("Admin", "CreatePackage") || IsActive("Admin", "EditPackage") ? "active" : "")">Packages</a></li>
+                        <li><a asp-controller="Admin" asp-action="DestinationQueue" class="@(IsActive("Admin", "DestinationQueue") ? "active" : "")">Destination Queue</a></li>
+                        <li><a asp-controller="Admin" asp-action="DestinationHistory" class="@(IsActive("Admin", "DestinationHistory") ? "active" : "")">Destination History</a></li>
+                        <li><a asp-controller="Admin" asp-action="CreateDestination" class="@(IsActive("Admin", "CreateDestination") ? "active" : "")">Create Destination</a></li>
+                        <li><a asp-controller="Poll" asp-action="ManagePolls" class="@(IsActive("Poll", "ManagePolls") || IsActive("Poll", "CreatePoll") || IsActive("Poll", "Results") ? "active" : "")">Manage Polls</a></li>
+                        <li class="dropdown"><a href="#"><span>@userName</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+                            <ul>
+                                <li><a asp-controller="Account" asp-action="Logout">Logout</a></li>
+                            </ul>
+                        </li>
+                    }
+                    else if (isLoggedIn)
                     {
                         <li><a asp-controller="User" asp-action="UserDashboard" class="@(IsActive("User", "UserDashboard") ? "active" : "")">Packages</a></li>
                         <li><a asp-controller="Destination" asp-action="Destinations" class="@(IsActive("Destination", "Destinations") ? "active" : "")">Destinations</a></li>
@@ -56,10 +70,6 @@
                         <li><a asp-controller="Booking" asp-action="Bookings" class="@(IsActive("Booking", "Bookings") ? "active" : "")">Bookings</a></li>
                         <li><a asp-controller="Poll" asp-action="Polls" class="@(IsActive("Poll", "Polls") ? "active" : "")">Polls</a></li>
                         <li><a asp-controller="Budget" asp-action="PlanTrip" class="@(IsActive("Budget", "PlanTrip") ? "active" : "")">Plan My Trip</a></li>
-                        @if (isAdmin)
-                        {
-                            <li><a asp-controller="Admin" asp-action="AdminDashboard">Admin Dashboard</a></li>
-                        }
                         <li class="dropdown"><a href="#"><span>@userName</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
                             <ul>
                                 <li><a asp-controller="User" asp-action="Profile">Profile</a></li>
@@ -77,9 +87,13 @@
                 <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
             </nav>
 
-            @if (isLoggedIn)
+            @if (isAdmin)
             {
-                <a class="btn-getstarted" asp-controller="User" asp-action="UserDashboard">Dashboard</a>
+                
+            }
+            else if (isLoggedIn)
+            {
+                
             }
             else
             {
@@ -111,7 +125,13 @@
                     <h4>Explore</h4>
                     <ul>
                         <li><i class="bi bi-chevron-right"></i> <a asp-controller="Home" asp-action="Index">Home</a></li>
-                        @if (isLoggedIn)
+                        @if (isAdmin)
+                        {
+                            <li><i class="bi bi-chevron-right"></i> <a asp-controller="Admin" asp-action="Packages">Packages</a></li>
+                            <li><i class="bi bi-chevron-right"></i> <a asp-controller="Admin" asp-action="DestinationQueue">Destination Queue</a></li>
+                            <li><i class="bi bi-chevron-right"></i> <a asp-controller="Poll" asp-action="ManagePolls">Manage Polls</a></li>
+                        }
+                        else if (isLoggedIn)
                         {
                             <li><i class="bi bi-chevron-right"></i> <a asp-controller="Destination" asp-action="Destinations">Destinations</a></li>
                             <li><i class="bi bi-chevron-right"></i> <a asp-controller="User" asp-action="UserDashboard">Packages</a></li>
@@ -128,7 +148,13 @@
                 <div class="col-lg-2 col-md-3 footer-links">
                     <h4>Account</h4>
                     <ul>
-                        @if (isLoggedIn)
+                        @if (isAdmin)
+                        {
+                            <li><i class="bi bi-chevron-right"></i> <a asp-controller="Admin" asp-action="DestinationHistory">Destination History</a></li>
+                            <li><i class="bi bi-chevron-right"></i> <a asp-controller="Admin" asp-action="CreateDestination">Create Destination</a></li>
+                            <li><i class="bi bi-chevron-right"></i> <a asp-controller="Account" asp-action="Logout">Logout</a></li>
+                        }
+                        else if (isLoggedIn)
                         {
                             <li><i class="bi bi-chevron-right"></i> <a asp-controller="User" asp-action="Profile">Profile</a></li>
                             <li><i class="bi bi-chevron-right"></i> <a asp-controller="Poll" asp-action="Polls">Polls</a></li>

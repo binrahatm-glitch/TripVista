@@ -1,40 +1,51 @@
 @model TripVista.Models.Entities.Polls
 @{
-    Layout = null;
+    ViewData["Title"] = "Poll Results";
     var results = (Dictionary<Guid, int>)ViewBag.Results;
     var totalVotes = results.Values.Sum();
 }
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Poll Results</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-</head>
-<body>
+<div class="page-title dark-background" data-aos="fade" style="background-image: url('@Url.Content("~/theme/assets/img/travel/showcase-7.webp")');">
+    <div class="container position-relative">
+        <h1>Poll Results</h1>
+        <nav class="breadcrumbs">
+            <ol>
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li><a asp-controller="Poll" asp-action="ManagePolls">Manage Polls</a></li>
+                <li class="current">Results</li>
+            </ol>
+        </nav>
+    </div>
+</div>
 
-    <div class="container mt-5 col-md-8">
-        <h2 class="mb-1">@Model.Question</h2>
-        <p class="text-muted">Total votes: @totalVotes</p>
+<section class="tv-section">
+    <div class="container" data-aos="fade-up">
 
-        @foreach (var opt in Model.Options ?? new List<TripVista.Models.Entities.PollOptions>())
-        {
-            var count = results.GetValueOrDefault(opt.PollOptionId);
-            var pct = totalVotes == 0 ? 0 : (count * 100.0 / totalVotes);
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="tv-card">
+                    <h4 class="mb-1">@Model.Question</h4>
+                    <p class="text-muted">Total votes: @totalVotes</p>
 
-            <div class="mb-3">
-                <div class="d-flex justify-content-between">
-                    <span>@opt.OptionText</span>
-                    <span>@count votes (@pct.ToString("0.0")%)</span>
-                </div>
-                <div class="progress">
-                    <div class="progress-bar" role="progressbar" style="width:@pct.ToString("0.0")%"></div>
+                    @foreach (var opt in Model.Options ?? new List<TripVista.Models.Entities.PollOptions>())
+                    {
+                        var count = results.GetValueOrDefault(opt.PollOptionId);
+                        var pct = totalVotes == 0 ? 0 : (count * 100.0 / totalVotes);
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>@opt.OptionText</span>
+                                <span>@count votes (@pct.ToString("0.0")%)</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width:@pct.ToString("0.0")%"></div>
+                            </div>
+                        </div>
+                    }
+
+                    <a asp-controller="Poll" asp-action="ManagePolls" class="btn btn-outline-secondary mt-3">Back</a>
                 </div>
             </div>
-        }
-
-        <a asp-controller="Poll" asp-action="ManagePolls" class="btn btn-secondary mt-3">Back</a>
+        </div>
     </div>
-
-</body>
-</html>
+</section>

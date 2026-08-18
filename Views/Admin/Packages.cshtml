@@ -1,20 +1,27 @@
 @model IEnumerable<TripVista.Models.Entities.Packages>
 @{
-    Layout = null;
+    ViewData["Title"] = "Manage Packages";
 }
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Manage Packages</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-</head>
-<body>
+<div class="page-title dark-background" data-aos="fade" style="background-image: url('@Url.Content("~/theme/assets/img/travel/showcase-8.webp")');">
+    <div class="container position-relative">
+        <h1>Manage Packages</h1>
+        <nav class="breadcrumbs">
+            <ol>
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li><a asp-controller="Admin" asp-action="AdminDashboard">Admin</a></li>
+                <li class="current">Packages</li>
+            </ol>
+        </nav>
+    </div>
+</div>
 
-    <div class="container mt-5">
+<section class="tv-section">
+    <div class="container" data-aos="fade-up">
+
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Manage Packages</h2>
-            <a asp-controller="Admin" asp-action="CreatePackage" class="btn btn-success">+ New Package</a>
+            <h3 class="section-subtitle mb-0">All Packages</h3>
+            <a asp-controller="Admin" asp-action="CreatePackage" class="btn btn-primary">+ New Package</a>
         </div>
 
         @if (TempData["msg"] != null)
@@ -26,58 +33,59 @@
             <div class="alert alert-danger">@TempData["Error"]</div>
         }
 
-        <table class="table table-bordered bg-white">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Price/Person</th>
-                    <th>Duration</th>
-                    <th>Tour Dates</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var pkg in Model)
-                {
-                    <tr>
-                        <td>@pkg.Title</td>
-                        <td>PKR @pkg.PricePerPerson</td>
-                        <td>@pkg.DurationDays days</td>
-                        <td>@pkg.TourStartDate.ToString("dd MMM yyyy") - @pkg.TourEndDate.ToString("dd MMM yyyy")</td>
-                        <td>
-                            @if (pkg.IsActive)
-                            {
-                                <span class="badge bg-success">Active</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">Inactive</span>
-                            }
-                        </td>
-                        <td>
-                            <a asp-controller="Admin" asp-action="EditPackage" asp-route-id="@pkg.PackageId" class="btn btn-outline-primary btn-sm">Edit</a>
+        <div class="tv-card">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Price/Person</th>
+                            <th>Duration</th>
+                            <th>Tour Dates</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var pkg in Model)
+                        {
+                            <tr>
+                                <td>@pkg.Title</td>
+                                <td>PKR @pkg.PricePerPerson</td>
+                                <td>@pkg.DurationDays days</td>
+                                <td>@pkg.TourStartDate.ToString("dd MMM yyyy") - @pkg.TourEndDate.ToString("dd MMM yyyy")</td>
+                                <td>
+                                    @if (pkg.IsActive)
+                                    {
+                                        <span class="tv-badge bg-success text-white">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tv-badge bg-secondary text-white">Inactive</span>
+                                    }
+                                </td>
+                                <td>
+                                    <a asp-controller="Admin" asp-action="EditPackage" asp-route-id="@pkg.PackageId" class="btn btn-outline-primary btn-sm">Edit</a>
 
-                            @if (pkg.IsActive)
-                            {
-                                <form asp-controller="Admin" asp-action="DeactivatePackage" method="post" class="d-inline">
-                                    <input type="hidden" name="id" value="@pkg.PackageId" />
-                                    <button type="submit" class="btn btn-outline-warning btn-sm">Deactivate</button>
-                                </form>
-                            }
+                                    @if (pkg.IsActive)
+                                    {
+                                        <form asp-controller="Admin" asp-action="DeactivatePackage" method="post" class="d-inline">
+                                            <input type="hidden" name="id" value="@pkg.PackageId" />
+                                            <button type="submit" class="btn btn-outline-warning btn-sm">Deactivate</button>
+                                        </form>
+                                    }
 
-                            <form asp-controller="Admin" asp-action="DeletePackage" method="post" class="d-inline">
-                                <input type="hidden" name="id" value="@pkg.PackageId" />
-                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Delete this package? This is only possible if it has no bookings.');">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                                    <form asp-controller="Admin" asp-action="DeletePackage" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@pkg.PackageId" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Delete this package? This is only possible if it has no bookings.');">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-        <a asp-controller="Admin" asp-action="AdminDashboard" class="btn btn-secondary">Back to Dashboard</a>
     </div>
-
-</body>
-</html>
+</section>
