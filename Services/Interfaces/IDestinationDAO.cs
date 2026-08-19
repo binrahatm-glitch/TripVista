@@ -5,6 +5,9 @@ namespace TripVista.Services.Interfaces
     public interface IDestinationDAO
     {
         Task<Destinations> CreateAsync(Destinations destination);
+        Task<bool> UpdateAsync(Destinations destination);
+        Task<bool> IsLinkedToPackageAsync(Guid id);
+        Task<bool> DeleteAsync(Guid id);
         Task<Destinations?> GetByIdAsync(Guid id);
         Task<List<Destinations>> GetByUserIdAsync(Guid userId);
         Task<List<Destinations>> GetApprovedAsync();

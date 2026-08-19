@@ -1,0 +1,80 @@
+@model TripVista.Models.DTO.PaymentViewModel
+@{
+    ViewData["Title"] = "Payment";
+}
+
+<div class="page-title dark-background" data-aos="fade" style="background-image: url('@Url.Content("~/theme/assets/img/travel/showcase-7.webp")');">
+    <div class="container position-relative">
+        <h1>Payment</h1>
+        <nav class="breadcrumbs">
+            <ol>
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li><a asp-controller="Booking" asp-action="Bookings">Bookings</a></li>
+                <li class="current">Payment</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="tv-section">
+    <div class="container" data-aos="fade-up">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+
+                <div class="alert alert-info">
+                    <strong>@Model.PackageTitle</strong> &middot; @Model.TravelersCount traveler(s)<br />
+                    <strong>Amount Due:</strong> PKR @Model.Amount
+                </div>
+
+                <div class="tv-card">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="fw-semibold mb-0">Card Details</h5>
+                        <span class="tv-badge" style="background-color: var(--accent-color); color: var(--contrast-color);">Demo Payment</span>
+                    </div>
+
+                    <p class="small text-muted">This is a simulated checkout &mdash; no real charge is made and no card data is stored. Use a demo number such as <code>4242 4242 4242 4242</code>.</p>
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger" asp-validation-summary="All"></div>
+                    }
+
+                    <form asp-action="Payment" asp-controller="Booking" method="post">
+                        <input type="hidden" asp-for="BookingId" />
+                        <input type="hidden" asp-for="PackageTitle" />
+                        <input type="hidden" asp-for="TravelersCount" />
+                        <input type="hidden" asp-for="Amount" />
+
+                        <div class="mb-3">
+                            <label class="form-label">Cardholder Name</label>
+                            <input asp-for="CardholderName" class="form-control" placeholder="Name on card" required />
+                            <span asp-validation-for="CardholderName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Card Number</label>
+                            <input asp-for="CardNumber" class="form-control" placeholder="4242 4242 4242 4242" maxlength="19" required />
+                            <span asp-validation-for="CardNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Expiry (MM/YY)</label>
+                                <input asp-for="ExpiryDate" class="form-control" placeholder="12/28" maxlength="5" required />
+                                <span asp-validation-for="ExpiryDate" class="text-danger"></span>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label">CVV</label>
+                                <input asp-for="Cvv" class="form-control" placeholder="123" maxlength="4" required />
+                                <span asp-validation-for="Cvv" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Pay PKR @Model.Amount</button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>

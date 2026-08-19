@@ -24,34 +24,8 @@
 
                 <div asp-validation-summary="All" class="text-danger"></div>
 
-                <div class="tv-card mb-4">
-                    <h6>Need help pricing this package?</h6>
-                    <div class="row g-2">
-                        <div class="col-md-3">
-                            <label class="form-label small">Region</label>
-                            <select id="estRegion" class="form-select form-select-sm">
-                                <option value="Northern">Northern Areas</option>
-                                <option value="Coastal">Coastal</option>
-                                <option value="Urban">Urban</option>
-                                <option value="Desert">Desert</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small">Season</label>
-                            <select id="estSeason" class="form-select form-select-sm">
-                                <option value="Peak">Peak</option>
-                                <option value="Off-Peak">Off-Peak</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3 d-flex align-items-end">
-                            <button type="button" id="estimateBtn" class="btn btn-outline-primary btn-sm w-100">Estimate Budget</button>
-                        </div>
-                    </div>
-                    <div id="estimateResult" class="small text-muted mt-2"></div>
-                </div>
-
                 <div class="tv-card">
-                    <form asp-action="CreatePackage" method="post">
+                    <form asp-action="CreatePackage" method="post" enctype="multipart/form-data">
                         <div class="mb-3">
                             <label asp-for="Title" class="form-label"></label>
                             <input asp-for="Title" class="form-control" />
@@ -64,8 +38,20 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="ImagePath" class="form-label">Image URL</label>
-                            <input asp-for="ImagePath" class="form-control" />
+                            <label class="form-label">Package Image</label>
+                            <input type="file" asp-for="ImageFile" class="form-control" accept="image/*" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Region" class="form-label"></label>
+                            <select asp-for="Region" class="form-select" id="region">
+                                <option value="">Select a region</option>
+                                <option value="Northern">Northern Areas</option>
+                                <option value="Coastal">Coastal</option>
+                                <option value="Urban">Urban</option>
+                                <option value="Desert">Desert</option>
+                            </select>
+                            <span asp-validation-for="Region" class="text-danger"></span>
                         </div>
 
                         <div class="row mb-3">
@@ -75,9 +61,9 @@
                                 <span asp-validation-for="PricePerPerson" class="text-danger"></span>
                             </div>
                             <div class="col-md-4">
-                                <label asp-for="DurationDays" class="form-label"></label>
-                                <input asp-for="DurationDays" type="number" class="form-control" id="durationDays" />
-                                <span asp-validation-for="DurationDays" class="text-danger"></span>
+                                <label class="form-label">Duration (days)</label>
+                                <input type="text" id="durationDisplay" class="form-control" readonly value="0" />
+                                <div class="form-text">Calculated automatically from the tour dates.</div>
                             </div>
                             <div class="col-md-4">
                                 <label asp-for="MaxGroupSize" class="form-label"></label>
@@ -86,15 +72,33 @@
                             </div>
                         </div>
 
+                        <div class="tv-card mb-3" style="background-color: color-mix(in srgb, var(--accent-color), transparent 95%);">
+                            <h6 class="mb-2"><i class="bi bi-robot me-1" style="color: var(--accent-color);"></i>AI Price Suggestion</h6>
+                            <p class="small text-muted mb-2">Predicted by an ML.NET model trained on package pricing data, using the region, season, duration, group size, and number of destinations selected below (more stops mean more inter-destination transport/logistics cost).</p>
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label small">Season (what-if)</label>
+                                    <select id="estSeason" class="form-select form-select-sm">
+                                        <option value="Peak">Peak</option>
+                                        <option value="Off-Peak">Off-Peak</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="button" id="estimateBtn" class="btn btn-outline-primary btn-sm w-100">Suggest Price</button>
+                                </div>
+                            </div>
+                            <div id="estimateResult" class="small mt-2"></div>
+                        </div>
+
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label asp-for="TourStartDate" class="form-label"></label>
-                                <input asp-for="TourStartDate" type="date" class="form-control" />
+                                <input asp-for="TourStartDate" type="date" class="form-control" id="tourStartDate" />
                                 <span asp-validation-for="TourStartDate" class="text-danger"></span>
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="TourEndDate" class="form-label"></label>
-                                <input asp-for="TourEndDate" type="date" class="form-control" />
+                                <input asp-for="TourEndDate" type="date" class="form-control" id="tourEndDate" />
                                 <span asp-validation-for="TourEndDate" class="text-danger"></span>
                             </div>
                         </div>
@@ -134,19 +138,46 @@
 
 @section Scripts {
     <script>
-        document.getElementById("estimateBtn").addEventListener("click", async function () {
-            const region = document.getElementById("estRegion").value;
-            const season = document.getElementById("estSeason").value;
-            const duration = parseInt(document.getElementById("durationDays").value) || 1;
-            const groupSize = parseInt(document.getElementById("maxGroupSize").value) || 1;
+        const startInput = document.getElementById("tourStartDate");
+        const endInput = document.getElementById("tourEndDate");
+        const durationDisplay = document.getElementById("durationDisplay");
+        const today = new Date().toISOString().split("T")[0];
+        startInput.min = today;
 
-            const params = new URLSearchParams({ region, season, durationDays: duration, groupSize });
+        function updateDuration() {
+            endInput.min = startInput.value || today;
+
+            if (startInput.value && endInput.value) {
+                const diffDays = Math.round((new Date(endInput.value) - new Date(startInput.value)) / 86400000);
+                durationDisplay.value = diffDays >= 0 ? diffDays : 0;
+            } else {
+                durationDisplay.value = 0;
+            }
+        }
+
+        startInput.addEventListener("change", updateDuration);
+        endInput.addEventListener("change", updateDuration);
+        updateDuration();
+
+        document.getElementById("estimateBtn").addEventListener("click", async function () {
+            const region = document.getElementById("region").value;
+            if (!region) {
+                document.getElementById("estimateResult").innerText = "Select a region first.";
+                return;
+            }
+
+            const season = document.getElementById("estSeason").value;
+            const duration = parseInt(durationDisplay.value) || 1;
+            const groupSize = parseInt(document.getElementById("maxGroupSize").value) || 1;
+            const destinationCount = document.querySelectorAll('input[type="checkbox"][name$=".Selected"]:checked').length || 1;
+
+            const params = new URLSearchParams({ region, season, durationDays: duration, groupSize, destinationCount });
             const res = await fetch("/Budget/EstimatePackagePrice?" + params.toString());
             if (!res.ok) return;
             const data = await res.json();
 
             document.getElementById("estimateResult").innerText =
-                `Suggested price per person: PKR ${data.minSuggestedPrice} - PKR ${data.maxSuggestedPrice}`;
+                `AI suggested price per person (${destinationCount} destination${destinationCount === 1 ? "" : "s"}): PKR ${data.minSuggestedPrice} - PKR ${data.maxSuggestedPrice}`;
         });
     </script>
 }

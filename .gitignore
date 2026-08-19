@@ -19,6 +19,9 @@ x86/
 [Aa][Rr][Mm]64/
 bld/
 [Bb]in/
+
+# Trained ML.NET model artifacts (regenerated on first run)
+/MLModels/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/

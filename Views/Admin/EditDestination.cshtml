@@ -1,0 +1,65 @@
+@model TripVista.Models.DTO.EditDestinationViewModel
+@{
+    ViewData["Title"] = "Edit Destination";
+}
+
+<div class="page-title dark-background" data-aos="fade" style="background-image: url('@Url.Content("~/theme/assets/img/travel/showcase-3.webp")');">
+    <div class="container position-relative">
+        <h1>Edit Destination</h1>
+        <nav class="breadcrumbs">
+            <ol>
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li><a asp-controller="Admin" asp-action="AdminDashboard">Admin</a></li>
+                <li><a asp-controller="Admin" asp-action="ManageDestinations">Manage Destinations</a></li>
+                <li class="current">Edit Destination</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="tv-section">
+    <div class="container" data-aos="fade-up">
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="tv-card">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+
+                    <form asp-action="EditDestination" method="post" enctype="multipart/form-data">
+                        <input type="hidden" asp-for="DestinationId" />
+                        <input type="hidden" asp-for="ImageUrl" />
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label"></label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Location" class="form-label"></label>
+                            <input asp-for="Location" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label"></label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Image</label>
+                            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                            {
+                                <img src="@Model.ImageUrl" alt="Current image" class="d-block mb-2 rounded" style="max-height: 120px;" />
+                            }
+                            <input type="file" asp-for="Image" class="form-control" accept="image/*" />
+                            <div class="form-text">Leave empty to keep the current image.</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <a asp-controller="Admin" asp-action="ManageDestinations" class="btn btn-outline-secondary">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

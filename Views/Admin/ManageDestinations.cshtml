@@ -1,16 +1,16 @@
 @model IEnumerable<TripVista.Models.Entities.Destinations>
 @{
-    ViewData["Title"] = "Destination History";
+    ViewData["Title"] = "Manage Destinations";
 }
 
 <div class="page-title dark-background" data-aos="fade" style="background-image: url('@Url.Content("~/theme/assets/img/travel/showcase-3.webp")');">
     <div class="container position-relative">
-        <h1>Destination History</h1>
+        <h1>Manage Destinations</h1>
         <nav class="breadcrumbs">
             <ol>
                 <li><a asp-controller="Home" asp-action="Index">Home</a></li>
                 <li><a asp-controller="Admin" asp-action="AdminDashboard">Admin</a></li>
-                <li class="current">Destination History</li>
+                <li class="current">Manage Destinations</li>
             </ol>
         </nav>
     </div>
@@ -18,6 +18,23 @@
 
 <section class="tv-section">
     <div class="container" data-aos="fade-up">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="section-subtitle mb-0">Reviewed Destinations</h3>
+            <div>
+                <a asp-controller="Admin" asp-action="DestinationQueue" class="btn btn-outline-secondary">Review Queue</a>
+                <a asp-controller="Admin" asp-action="CreateDestination" class="btn btn-primary">+ New Destination</a>
+            </div>
+        </div>
+
+        @if (TempData["msg"] != null)
+        {
+            <div class="alert alert-success">@TempData["msg"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">@TempData["Error"]</div>
+        }
 
         <div class="tv-card">
             <div class="table-responsive">
@@ -30,6 +47,7 @@
                             <th>Remarks</th>
                             <th>Reviewed By</th>
                             <th>Reviewed On</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -51,6 +69,14 @@
                                 <td>@dest.AdminRemarks</td>
                                 <td>@dest.ReviewedByAdmin?.FullName</td>
                                 <td>@dest.ReviewedAt?.ToString("dd MMM yyyy")</td>
+                                <td>
+                                    <a asp-controller="Admin" asp-action="EditDestination" asp-route-id="@dest.DestinationId" class="btn btn-outline-primary btn-sm">Edit</a>
+
+                                    <form asp-controller="Admin" asp-action="DeleteDestination" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@dest.DestinationId" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Delete this destination? This is only possible if it is not linked to any packages.');">Delete</button>
+                                    </form>
+                                </td>
                             </tr>
                         }
                     </tbody>
@@ -58,8 +84,10 @@
             </div>
         </div>
 
-        <div class="mt-3">
-            <a asp-controller="Admin" asp-action="DestinationQueue" class="btn btn-outline-secondary">Back to Queue</a>
-        </div>
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info mt-3">No reviewed destinations yet.</div>
+        }
+
     </div>
 </section>

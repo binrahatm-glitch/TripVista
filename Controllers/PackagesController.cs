@@ -77,9 +77,9 @@ namespace TripVista.Controllers
             var userId = Guid.Parse(HttpContext.Session.GetString("id")!);
             var totalPrice = package.PricePerPerson * vm.NumberOfTravelers;
 
-            var booking = await _bookingDAO.CreateConfirmedBookingAsync(userId, package.PackageId, vm.NumberOfTravelers, totalPrice);
+            var booking = await _bookingDAO.CreatePendingBookingAsync(userId, package.PackageId, vm.NumberOfTravelers, totalPrice);
 
-            return RedirectToAction("AddTravelerDetails", "Booking", new { bookingId = booking.BookingId });
+            return RedirectToAction("Payment", "Booking", new { bookingId = booking.BookingId });
         }
     }
 }

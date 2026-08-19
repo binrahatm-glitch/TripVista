@@ -52,9 +52,8 @@
                     {
                         <li><a asp-controller="Admin" asp-action="AdminDashboard" class="@(IsActive("Admin", "AdminDashboard") ? "active" : "")">Dashboard</a></li>
                         <li><a asp-controller="Admin" asp-action="Packages" class="@(IsActive("Admin", "Packages") || IsActive("Admin", "CreatePackage") || IsActive("Admin", "EditPackage") ? "active" : "")">Packages</a></li>
+                        <li><a asp-controller="Admin" asp-action="ManageDestinations" class="@(IsActive("Admin", "ManageDestinations") || IsActive("Admin", "CreateDestination") ? "active" : "")">Manage Destinations</a></li>
                         <li><a asp-controller="Admin" asp-action="DestinationQueue" class="@(IsActive("Admin", "DestinationQueue") ? "active" : "")">Destination Queue</a></li>
-                        <li><a asp-controller="Admin" asp-action="DestinationHistory" class="@(IsActive("Admin", "DestinationHistory") ? "active" : "")">Destination History</a></li>
-                        <li><a asp-controller="Admin" asp-action="CreateDestination" class="@(IsActive("Admin", "CreateDestination") ? "active" : "")">Create Destination</a></li>
                         <li><a asp-controller="Poll" asp-action="ManagePolls" class="@(IsActive("Poll", "ManagePolls") || IsActive("Poll", "CreatePoll") || IsActive("Poll", "Results") ? "active" : "")">Manage Polls</a></li>
                         <li class="dropdown"><a href="#"><span>@userName</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
                             <ul>
@@ -150,8 +149,7 @@
                     <ul>
                         @if (isAdmin)
                         {
-                            <li><i class="bi bi-chevron-right"></i> <a asp-controller="Admin" asp-action="DestinationHistory">Destination History</a></li>
-                            <li><i class="bi bi-chevron-right"></i> <a asp-controller="Admin" asp-action="CreateDestination">Create Destination</a></li>
+                            <li><i class="bi bi-chevron-right"></i> <a asp-controller="Admin" asp-action="ManageDestinations">Manage Destinations</a></li>
                             <li><i class="bi bi-chevron-right"></i> <a asp-controller="Account" asp-action="Logout">Logout</a></li>
                         }
                         else if (isLoggedIn)

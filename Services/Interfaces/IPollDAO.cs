@@ -8,6 +8,7 @@ namespace TripVista.Services.Interfaces
         Task<List<Polls>> GetActiveAsync();
         Task<Polls?> GetByIdAsync(Guid id);
         Task<Polls> CreateAsync(Polls poll);
+        Task<(bool success, string? error)> UpdateAsync(Guid pollId, string question, List<(Guid? OptionId, string Text, bool Remove)> options);
         Task<bool> HasVotesAsync(Guid pollId);
         Task<bool> SetActiveAsync(Guid pollId, bool isActive);
         Task<bool> DeleteAsync(Guid pollId);

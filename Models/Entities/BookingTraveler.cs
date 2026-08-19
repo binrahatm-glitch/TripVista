@@ -17,6 +17,9 @@ namespace TripVista.Models.Entities
         [Required, MaxLength(50)]
         public string CNICOrPassportNumber { get; set; } = string.Empty;
 
+        [Required, MaxLength(20)]
+        public string ContactNumber { get; set; } = string.Empty;
+
         // Navigation
         public Bookings? Booking { get; set; }
     }

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace TripVista.Models.DTO
 {
@@ -13,10 +14,15 @@ namespace TripVista.Models.DTO
 
         public string? ImagePath { get; set; }
 
+        public IFormFile? ImageFile { get; set; }
+
+        [Required]
+        public string Region { get; set; } = string.Empty;
+
         [Range(0.01, double.MaxValue, ErrorMessage = "Price per person must be greater than 0.")]
         public decimal PricePerPerson { get; set; }
 
-        [Range(1, int.MaxValue, ErrorMessage = "Duration must be at least 1 day.")]
+        // Derived from TourStartDate/TourEndDate - recalculated server-side, not user-editable.
         public int DurationDays { get; set; }
 
         [Range(1, int.MaxValue, ErrorMessage = "Max group size must be at least 1.")]

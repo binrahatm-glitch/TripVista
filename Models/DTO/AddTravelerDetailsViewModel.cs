@@ -12,6 +12,9 @@ namespace TripVista.Models.DTO
 
         [Required, MaxLength(50)]
         public string CNICOrPassportNumber { get; set; } = string.Empty;
+
+        [Required, MaxLength(20)]
+        public string ContactNumber { get; set; } = string.Empty;
     }
 
     public class AddTravelerDetailsViewModel

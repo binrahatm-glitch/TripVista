@@ -35,7 +35,7 @@
                         <div class="tv-card mb-3">
                             <h6>Traveler @(i + 1)</h6>
                             <div class="row">
-                                <div class="col-md-5 mb-2">
+                                <div class="col-md-4 mb-2">
                                     <label class="form-label">Full Name</label>
                                     <input name="Travelers[@i].FullName" value="@Model.Travelers[i].FullName" class="form-control" required />
                                 </div>
@@ -43,9 +43,13 @@
                                     <label class="form-label">Age</label>
                                     <input type="number" name="Travelers[@i].Age" value="@Model.Travelers[i].Age" class="form-control" min="0" max="120" required />
                                 </div>
-                                <div class="col-md-5 mb-2">
+                                <div class="col-md-3 mb-2">
                                     <label class="form-label">CNIC / Passport Number</label>
                                     <input name="Travelers[@i].CNICOrPassportNumber" value="@Model.Travelers[i].CNICOrPassportNumber" class="form-control" required />
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <label class="form-label">Contact Number</label>
+                                    <input name="Travelers[@i].ContactNumber" value="@Model.Travelers[i].ContactNumber" class="form-control" placeholder="03xxxxxxxxx" required />
                                 </div>
                             </div>
                         </div>

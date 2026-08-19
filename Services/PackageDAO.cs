@@ -60,6 +60,7 @@ namespace TripVista.Services
 
             existing.Title = pkg.Title;
             existing.ImagePath = pkg.ImagePath;
+            existing.Region = pkg.Region;
             existing.PricePerPerson = pkg.PricePerPerson;
             existing.DurationDays = pkg.DurationDays;
             existing.MaxGroupSize = pkg.MaxGroupSize;

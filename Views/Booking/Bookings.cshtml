@@ -32,7 +32,8 @@
             @foreach (var booking in Model)
             {
                 var tourStart = booking.Package?.TourStartDate;
-                var canCancel = booking.Status == "Confirmed" && tourStart.HasValue && (tourStart.Value - DateTime.Now) >= TimeSpan.FromDays(3);
+                var canCancel = (booking.Status == "Confirmed" && tourStart.HasValue && (tourStart.Value - DateTime.Now) >= TimeSpan.FromDays(3))
+                    || booking.Status == "PendingPayment";
 
                 <div class="col-lg-6 mb-4">
                     <div class="tv-card h-100">
@@ -64,6 +65,14 @@
                             <p class="fw-semibold text-success">PKR @booking.TotalPrice</p>
                         }
 
+                        @if (booking.Status == "PendingPayment")
+                        {
+                            <div class="alert alert-warning small py-2">
+                                Payment not completed.
+                                <a asp-controller="Booking" asp-action="Payment" asp-route-bookingId="@booking.BookingId">Complete payment</a>
+                            </div>
+                        }
+
                         @if (!booking.AreTravelerDetailsSubmitted && booking.Status == "Confirmed")
                         {
                             <div class="alert alert-warning small py-2">
@@ -72,7 +81,7 @@
                             </div>
                         }
 
-                        @if (booking.Status == "Confirmed")
+                        @if (booking.Status == "Confirmed" || booking.Status == "PendingPayment")
                         {
                             @if (canCancel)
                             {

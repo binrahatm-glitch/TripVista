@@ -48,26 +48,79 @@
                             <option value="Desert">Desert</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-primary">Get Suggestion</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-robot me-1"></i>Get AI Suggestion</button>
                 </form>
 
                 @if (result != null)
                 {
-                    <div class="tv-card">
-                        <h5>Suggested Plan</h5>
-                        <p><strong>Daily budget per person:</strong> PKR @result.DailyBudgetPerPerson</p>
+                    <div class="tv-card mb-4">
+                        <h5><i class="bi bi-robot me-1" style="color: var(--accent-color);"></i>AI Suggested Plan</h5>
+                        <p class="small text-muted">Tier predicted by an ML.NET model; cost breakdown estimated from real regional cost floors for that tier.</p>
+                        <p><strong>Daily budget per person (as entered):</strong> PKR @result.DailyBudgetPerPerson</p>
                         <p><strong>Tier:</strong> @result.Tier</p>
                         <p><strong>Suggested Region Style:</strong> @result.SuggestedRegion</p>
 
-                        <p class="mb-1"><strong>Suggested breakdown:</strong></p>
-                        <ul>
-                            <li>Travel: @result.TravelPercent%</li>
-                            <li>Accommodation: @result.AccommodationPercent%</li>
-                            <li>Food: @result.FoodPercent%</li>
-                            <li>Activities: @result.ActivitiesPercent%</li>
+                        @if (!result.IsBudgetRealistic)
+                        {
+                            <div class="alert alert-warning">
+                                <strong>Heads up:</strong> a realistic @result.Tier.ToLower()-tier trip here costs about
+                                <strong>PKR @result.EstimatedTotalCost.ToString("N0")</strong> - about
+                                <strong>PKR @result.BudgetShortfall.ToString("N0")</strong> more than your PKR @result.Budget.ToString("N0") budget.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-success">
+                                Estimated realistic cost: <strong>PKR @result.EstimatedTotalCost.ToString("N0")</strong>, within your PKR @result.Budget.ToString("N0") budget.
+                            </div>
+                        }
+
+                        <p class="mb-1"><strong>Estimated cost breakdown:</strong></p>
+                        <ul class="mb-0">
+                            <li>Fuel / Transport: PKR @result.EstimatedFuelTransportCost.ToString("N0") (@result.TravelPercent%)</li>
+                            <li>Accommodation (Rent): PKR @result.EstimatedAccommodationCost.ToString("N0") (@result.AccommodationPercent%)</li>
+                            <li>Food: PKR @result.EstimatedFoodCost.ToString("N0") (@result.FoodPercent%)</li>
+                            <li>Activities: PKR @result.EstimatedActivitiesCost.ToString("N0") (@result.ActivitiesPercent%)</li>
                         </ul>
 
-                        <p class="text-muted">@result.Recommendation</p>
+                        <p class="text-muted mt-2">@result.Recommendation</p>
+                    </div>
+
+                    <div class="tv-card">
+                        <h5 class="mb-3">Destinations You Can Visit in This Budget</h5>
+
+                        @if (result.AffordablePackages.Any())
+                        {
+                            @foreach (var pkg in result.AffordablePackages)
+                            {
+                                <div class="border rounded p-3 mb-2">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">@pkg.Title</h6>
+                                            <p class="small text-muted mb-1">@pkg.Region &middot; @pkg.DurationDays day(s)</p>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="fw-semibold @(pkg.OverBudgetBy > 0 ? "text-danger" : "text-success")">PKR @pkg.TotalEstimatedCost.ToString("N0")</span>
+                                            @if (pkg.OverBudgetBy > 0)
+                                            {
+                                                <div class="small text-danger">PKR @pkg.OverBudgetBy.ToString("N0") over budget</div>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="row small text-muted mt-2">
+                                        <div class="col-6 col-md-3">Fuel/Transport: PKR @pkg.FuelTransportCost.ToString("N0")</div>
+                                        <div class="col-6 col-md-3">Accommodation: PKR @pkg.AccommodationCost.ToString("N0")</div>
+                                        <div class="col-6 col-md-3">Food: PKR @pkg.FoodCost.ToString("N0")</div>
+                                        <div class="col-6 col-md-3">Activities: PKR @pkg.ActivitiesCost.ToString("N0")</div>
+                                    </div>
+                                    <a asp-controller="Packages" asp-action="ViewDetails" asp-route-id="@pkg.PackageId" class="btn btn-sm btn-outline-primary mt-2">View Package</a>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">No published packages exist yet. Once the admin publishes some, matching ones will show up here.</p>
+                        }
                     </div>
                 }
             </div>

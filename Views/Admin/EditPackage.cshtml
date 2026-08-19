@@ -24,8 +24,9 @@
                 <div class="tv-card">
                     <div asp-validation-summary="All" class="text-danger"></div>
 
-                    <form asp-action="EditPackage" method="post">
+                    <form asp-action="EditPackage" method="post" enctype="multipart/form-data">
                         <input type="hidden" asp-for="PackageId" />
+                        <input type="hidden" asp-for="ImagePath" />
 
                         <div class="mb-3">
                             <label asp-for="Title" class="form-label"></label>
@@ -39,8 +40,25 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="ImagePath" class="form-label">Image URL</label>
-                            <input asp-for="ImagePath" class="form-control" />
+                            <label class="form-label">Package Image</label>
+                            @if (!string.IsNullOrEmpty(Model.ImagePath))
+                            {
+                                <img src="@Model.ImagePath" alt="Current image" class="d-block mb-2 rounded" style="max-height: 120px;" />
+                            }
+                            <input type="file" asp-for="ImageFile" class="form-control" accept="image/*" />
+                            <div class="form-text">Leave empty to keep the current image.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Region" class="form-label"></label>
+                            <select asp-for="Region" class="form-select">
+                                <option value="">Select a region</option>
+                                <option value="Northern">Northern Areas</option>
+                                <option value="Coastal">Coastal</option>
+                                <option value="Urban">Urban</option>
+                                <option value="Desert">Desert</option>
+                            </select>
+                            <span asp-validation-for="Region" class="text-danger"></span>
                         </div>
 
                         <div class="row mb-3">
@@ -50,9 +68,9 @@
                                 <span asp-validation-for="PricePerPerson" class="text-danger"></span>
                             </div>
                             <div class="col-md-4">
-                                <label asp-for="DurationDays" class="form-label"></label>
-                                <input asp-for="DurationDays" type="number" class="form-control" />
-                                <span asp-validation-for="DurationDays" class="text-danger"></span>
+                                <label class="form-label">Duration (days)</label>
+                                <input type="text" id="durationDisplay" class="form-control" readonly value="@Model.DurationDays" />
+                                <div class="form-text">Calculated automatically from the tour dates.</div>
                             </div>
                             <div class="col-md-4">
                                 <label asp-for="MaxGroupSize" class="form-label"></label>
@@ -64,12 +82,12 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label asp-for="TourStartDate" class="form-label"></label>
-                                <input asp-for="TourStartDate" type="date" class="form-control" />
+                                <input asp-for="TourStartDate" type="date" class="form-control" id="tourStartDate" />
                                 <span asp-validation-for="TourStartDate" class="text-danger"></span>
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="TourEndDate" class="form-label"></label>
-                                <input asp-for="TourEndDate" type="date" class="form-control" />
+                                <input asp-for="TourEndDate" type="date" class="form-control" id="tourEndDate" />
                                 <span asp-validation-for="TourEndDate" class="text-danger"></span>
                             </div>
                         </div>
@@ -106,3 +124,28 @@
         </div>
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        const startInput = document.getElementById("tourStartDate");
+        const endInput = document.getElementById("tourEndDate");
+        const durationDisplay = document.getElementById("durationDisplay");
+        const today = new Date().toISOString().split("T")[0];
+        startInput.min = today;
+
+        function updateDuration() {
+            endInput.min = startInput.value || today;
+
+            if (startInput.value && endInput.value) {
+                const diffDays = Math.round((new Date(endInput.value) - new Date(startInput.value)) / 86400000);
+                durationDisplay.value = diffDays >= 0 ? diffDays : 0;
+            } else {
+                durationDisplay.value = 0;
+            }
+        }
+
+        startInput.addEventListener("change", updateDuration);
+        endInput.addEventListener("change", updateDuration);
+        updateDuration();
+    </script>
+}

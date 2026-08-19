@@ -11,16 +11,32 @@ namespace TripVista.Controllers
     {
         private readonly IPackageDAO _packageDAO;
         private readonly IDestinationDAO _destinationDAO;
+        private readonly IReportingDAO _reportingDAO;
+        private readonly IBudgetModelTrainer _budgetModelTrainer;
 
-        public AdminController(IPackageDAO packageDAO, IDestinationDAO destinationDAO)
+        public AdminController(IPackageDAO packageDAO, IDestinationDAO destinationDAO, IReportingDAO reportingDAO, IBudgetModelTrainer budgetModelTrainer)
         {
             _packageDAO = packageDAO;
             _destinationDAO = destinationDAO;
+            _reportingDAO = reportingDAO;
+            _budgetModelTrainer = budgetModelTrainer;
         }
 
-        public IActionResult AdminDashboard()
+        public async Task<IActionResult> AdminDashboard()
         {
-            return View();
+            var stats = await _reportingDAO.GetDashboardStatsAsync();
+            return View(stats);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RetrainAiModels()
+        {
+            var summary = await _budgetModelTrainer.RetrainAsync();
+
+            var dataSource = summary.PackagePriceModelUsedRealData ? "real package data" : "synthetic data (not enough real packages yet)";
+            TempData["msg"] = $"AI models retrained. Price model: {summary.PackagePriceTrainingRows} rows ({dataSource}). Tier model: {summary.TripTierTrainingRows} rows (synthetic).";
+            return RedirectToAction("AdminDashboard");
         }
 
         // ---------------- Packages ----------------
@@ -46,10 +62,7 @@ namespace TripVista.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreatePackage(PackageFormViewModel vm)
         {
-            if (vm.TourEndDate <= vm.TourStartDate)
-            {
-                ModelState.AddModelError(nameof(vm.TourEndDate), "Tour end date must be after the start date.");
-            }
+            ValidatePackageDates(vm);
 
             if (!ModelState.IsValid)
                 return View(vm);
@@ -61,9 +74,10 @@ namespace TripVista.Controllers
                 PackageId = Guid.NewGuid(),
                 Title = vm.Title,
                 Details = vm.Details,
-                ImagePath = vm.ImagePath,
+                ImagePath = await SaveUploadedImageAsync(vm.ImageFile) ?? vm.ImagePath,
+                Region = vm.Region,
                 PricePerPerson = vm.PricePerPerson,
-                DurationDays = vm.DurationDays,
+                DurationDays = (vm.TourEndDate.Date - vm.TourStartDate.Date).Days,
                 MaxGroupSize = vm.MaxGroupSize,
                 TourStartDate = vm.TourStartDate,
                 TourEndDate = vm.TourEndDate,
@@ -76,6 +90,35 @@ namespace TripVista.Controllers
             await _packageDAO.CreateAsync(package, destinationIds);
             TempData["msg"] = "Package created successfully.";
             return RedirectToAction("Packages");
+        }
+
+        private void ValidatePackageDates(PackageFormViewModel vm)
+        {
+            if (vm.TourStartDate.Date < DateTime.Today)
+            {
+                ModelState.AddModelError(nameof(vm.TourStartDate), "Tour start date must be today or in the future.");
+            }
+
+            if (vm.TourEndDate.Date < vm.TourStartDate.Date)
+            {
+                ModelState.AddModelError(nameof(vm.TourEndDate), "Tour end date must be on or after the start date.");
+            }
+        }
+
+        private async Task<string?> SaveUploadedImageAsync(IFormFile? image)
+        {
+            if (image == null || image.Length == 0) return null;
+
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
+            Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(image.FileName)}";
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            using var stream = new FileStream(filePath, FileMode.Create);
+            await image.CopyToAsync(stream);
+
+            return $"/images/{fileName}";
         }
 
         [HttpGet]
@@ -92,6 +135,7 @@ namespace TripVista.Controllers
                 Title = package.Title,
                 Details = package.Details,
                 ImagePath = package.ImagePath,
+                Region = package.Region ?? string.Empty,
                 PricePerPerson = package.PricePerPerson,
                 DurationDays = package.DurationDays,
                 MaxGroupSize = package.MaxGroupSize,
@@ -110,10 +154,7 @@ namespace TripVista.Controllers
         {
             if (vm.PackageId == null) return NotFound();
 
-            if (vm.TourEndDate <= vm.TourStartDate)
-            {
-                ModelState.AddModelError(nameof(vm.TourEndDate), "Tour end date must be after the start date.");
-            }
+            ValidatePackageDates(vm);
 
             if (!ModelState.IsValid)
                 return View(vm);
@@ -123,9 +164,10 @@ namespace TripVista.Controllers
                 PackageId = vm.PackageId.Value,
                 Title = vm.Title,
                 Details = vm.Details,
-                ImagePath = vm.ImagePath,
+                ImagePath = await SaveUploadedImageAsync(vm.ImageFile) ?? vm.ImagePath,
+                Region = vm.Region,
                 PricePerPerson = vm.PricePerPerson,
-                DurationDays = vm.DurationDays,
+                DurationDays = (vm.TourEndDate.Date - vm.TourStartDate.Date).Days,
                 MaxGroupSize = vm.MaxGroupSize,
                 TourStartDate = vm.TourStartDate,
                 TourEndDate = vm.TourEndDate,
@@ -189,20 +231,7 @@ namespace TripVista.Controllers
                 return View(dest);
             }
 
-            string? imageUrl = null;
-            if (dest.Image != null)
-            {
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
-                Directory.CreateDirectory(uploadsFolder);
-
-                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(dest.Image.FileName)}";
-                var filePath = Path.Combine(uploadsFolder, fileName);
-
-                using var stream = new FileStream(filePath, FileMode.Create);
-                await dest.Image.CopyToAsync(stream);
-
-                imageUrl = $"/images/{fileName}";
-            }
+            var imageUrl = await SaveUploadedImageAsync(dest.Image);
 
             var adminId = Guid.Parse(HttpContext.Session.GetString("id")!);
 
@@ -222,7 +251,7 @@ namespace TripVista.Controllers
 
             await _destinationDAO.CreateAsync(newDestination);
             TempData["msg"] = "Destination created and published.";
-            return RedirectToAction("DestinationHistory");
+            return RedirectToAction("ManageDestinations");
         }
 
         [HttpGet]
@@ -233,10 +262,60 @@ namespace TripVista.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> DestinationHistory()
+        public async Task<IActionResult> ManageDestinations()
         {
             var reviewed = await _destinationDAO.GetReviewedAsync();
             return View(reviewed);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditDestination(Guid id)
+        {
+            var destination = await _destinationDAO.GetByIdAsync(id);
+            if (destination == null) return NotFound();
+
+            var vm = new EditDestinationViewModel
+            {
+                DestinationId = destination.DestinationId,
+                Name = destination.Name,
+                Location = destination.Location,
+                Description = destination.Description,
+                ImageUrl = destination.ImageUrl
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditDestination(EditDestinationViewModel vm)
+        {
+            if (!ModelState.IsValid)
+                return View(vm);
+
+            var destination = new Destinations
+            {
+                DestinationId = vm.DestinationId,
+                Name = vm.Name,
+                Location = vm.Location,
+                Description = vm.Description,
+                ImageUrl = await SaveUploadedImageAsync(vm.Image) ?? vm.ImageUrl
+            };
+
+            await _destinationDAO.UpdateAsync(destination);
+            TempData["msg"] = "Destination updated.";
+            return RedirectToAction("ManageDestinations");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteDestination(Guid id)
+        {
+            var deleted = await _destinationDAO.DeleteAsync(id);
+            TempData[deleted ? "msg" : "Error"] = deleted
+                ? "Destination deleted."
+                : "This destination cannot be deleted because it is linked to one or more packages.";
+            return RedirectToAction("ManageDestinations");
         }
 
         [HttpPost]

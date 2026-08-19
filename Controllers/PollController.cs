@@ -100,6 +100,56 @@ namespace TripVista.Controllers
             return RedirectToAction("ManagePolls");
         }
 
+        [HttpGet]
+        [RequireRole("admin")]
+        public async Task<IActionResult> EditPoll(Guid pollId)
+        {
+            var poll = await _pollDAO.GetByIdAsync(pollId);
+            if (poll == null) return NotFound();
+
+            var results = await _pollDAO.GetResultsAsync(pollId);
+
+            var vm = new EditPollViewModel
+            {
+                PollId = poll.PollId,
+                Question = poll.Question,
+                Options = (poll.Options ?? new List<PollOptions>())
+                    .Select(o => new EditPollOptionInput
+                    {
+                        PollOptionId = o.PollOptionId,
+                        OptionText = o.OptionText,
+                        VoteCount = results.GetValueOrDefault(o.PollOptionId, 0)
+                    })
+                    .ToList()
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequireRole("admin")]
+        public async Task<IActionResult> EditPoll(EditPollViewModel vm)
+        {
+            if (!ModelState.IsValid)
+                return View(vm);
+
+            var options = vm.Options
+                .Select(o => (o.PollOptionId, o.OptionText, o.Remove))
+                .ToList();
+
+            var (success, error) = await _pollDAO.UpdateAsync(vm.PollId, vm.Question, options);
+
+            if (!success)
+            {
+                ModelState.AddModelError(string.Empty, error!);
+                return View(vm);
+            }
+
+            TempData["msg"] = "Poll updated.";
+            return RedirectToAction("ManagePolls");
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequireRole("admin")]

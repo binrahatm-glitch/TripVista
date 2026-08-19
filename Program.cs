@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using TripVista.Data;
+using TripVista.Models.Entities;
 using TripVista.Services;
 using TripVista.Services.Interfaces;
+using TripVista.Services.Ml;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +21,9 @@ builder.Services.AddScoped<IDestinationDAO, DestinationDAO>();
 builder.Services.AddScoped<IPackageDAO, PackageDAO>();
 builder.Services.AddScoped<IBookingDAO, BookingsDAO>();
 builder.Services.AddScoped<IPollDAO, PollDAO>();
-builder.Services.AddScoped<IBudgetEstimationService, RuleBasedBudgetEstimationService>();
+builder.Services.AddScoped<IReportingDAO, ReportingDAO>();
+builder.Services.AddScoped<IBudgetModelTrainer, BudgetModelTrainer>();
+builder.Services.AddSingleton<IBudgetEstimationService, MlBudgetEstimationService>();
 
 
 
@@ -34,6 +38,39 @@ builder.Services.AddSession(options =>
 
 
 var app = builder.Build();
+
+// Seed the default admin account if it doesn't exist yet.
+using (var scope = app.Services.CreateScope())
+{
+    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var adminEmail = config["AdminSeed:Email"];
+    var adminPassword = config["AdminSeed:Password"];
+
+    if (!string.IsNullOrWhiteSpace(adminEmail) && !string.IsNullOrWhiteSpace(adminPassword))
+    {
+        var userDAO = scope.ServiceProvider.GetRequiredService<IUserDAO>();
+        var existingAdmin = await userDAO.GetUserByEmailAsync(adminEmail);
+        if (existingAdmin == null)
+        {
+            await userDAO.CreateUserAsync(new Users
+            {
+                UserId = Guid.NewGuid(),
+                FullName = config["AdminSeed:FullName"] ?? "Admin",
+                Email = adminEmail,
+                Password = adminPassword, // hashed inside CreateUserAsync
+                Role = "admin",
+                IsEmailVerified = true
+            });
+        }
+    }
+}
+
+// Train the budget ML models on first run (skipped once the model files exist on disk).
+using (var scope = app.Services.CreateScope())
+{
+    var trainer = scope.ServiceProvider.GetRequiredService<IBudgetModelTrainer>();
+    await trainer.EnsureModelsTrainedAsync();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

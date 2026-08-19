@@ -17,9 +17,13 @@ namespace TripVista.Models.Entities
         [Column(TypeName = "decimal(18,2)")]
         public decimal? TotalPrice { get; set; }
 
-        public string Status { get; set; } = "Pending"; // Pending, Confirmed, Cancelled, Completed
+        public string Status { get; set; } = "PendingPayment"; // PendingPayment, Confirmed, Cancelled, Completed
         public bool AreTravelerDetailsSubmitted { get; set; } = false;
         public DateTime? CancelledAt { get; set; }
+
+        public string PaymentStatus { get; set; } = "Pending"; // Pending, Paid
+        public string? PaymentReference { get; set; }
+        public DateTime? PaidAt { get; set; }
 
         // Navigation
         public Users? User { get; set; }

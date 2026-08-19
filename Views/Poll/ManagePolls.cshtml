@@ -53,6 +53,7 @@
 
                 <div class="d-flex gap-2">
                     <a asp-controller="Poll" asp-action="Results" asp-route-pollId="@poll.PollId" class="btn btn-outline-primary btn-sm">Results</a>
+                    <a asp-controller="Poll" asp-action="EditPoll" asp-route-pollId="@poll.PollId" class="btn btn-outline-secondary btn-sm">Edit</a>
 
                     <form asp-controller="Poll" asp-action="ToggleActive" method="post">
                         <input type="hidden" name="pollId" value="@poll.PollId" />

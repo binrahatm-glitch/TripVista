@@ -1,0 +1,88 @@
+@model TripVista.Models.DTO.EditPollViewModel
+@{
+    ViewData["Title"] = "Edit Poll";
+}
+
+<div class="page-title dark-background" data-aos="fade" style="background-image: url('@Url.Content("~/theme/assets/img/travel/showcase-8.webp")');">
+    <div class="container position-relative">
+        <h1>Edit Poll</h1>
+        <nav class="breadcrumbs">
+            <ol>
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li><a asp-controller="Poll" asp-action="ManagePolls">Manage Polls</a></li>
+                <li class="current">Edit Poll</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="tv-section">
+    <div class="container" data-aos="fade-up">
+
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="tv-card">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+
+                    <form asp-action="EditPoll" method="post">
+                        <input type="hidden" asp-for="PollId" />
+
+                        <div class="mb-3">
+                            <label asp-for="Question" class="form-label"></label>
+                            <input asp-for="Question" class="form-control" />
+                            <span asp-validation-for="Question" class="text-danger"></span>
+                        </div>
+
+                        <label class="form-label">Options</label>
+                        <div id="optionsContainer">
+                            @for (int i = 0; i < Model.Options.Count; i++)
+                            {
+                                var opt = Model.Options[i];
+                                var hasVotes = opt.VoteCount > 0;
+
+                                <div class="input-group mb-2">
+                                    <input type="hidden" name="Options[@i].PollOptionId" value="@opt.PollOptionId" />
+                                    <input name="Options[@i].OptionText" value="@opt.OptionText" class="form-control" placeholder="Option @(i + 1)" />
+
+                                    @if (hasVotes)
+                                    {
+                                        <span class="input-group-text small text-muted">@opt.VoteCount vote@(opt.VoteCount == 1 ? "" : "s")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="input-group-text">
+                                            <input type="checkbox" name="Options[@i].Remove" value="true" class="form-check-input mt-0" title="Remove this option" />
+                                        </span>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <button type="button" id="addOption" class="btn btn-outline-secondary btn-sm mb-3">+ Add Option</button>
+                        <p class="small text-muted">Options that already have votes can't be removed, since that would invalidate those votes. Check the box next to an option to remove it.</p>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <a asp-controller="Poll" asp-action="ManagePolls" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        let optionCount = @Model.Options.Count;
+        document.getElementById("addOption").addEventListener("click", function () {
+            const container = document.getElementById("optionsContainer");
+            const div = document.createElement("div");
+            div.className = "input-group mb-2";
+            div.innerHTML = `<input type="hidden" name="Options[${optionCount}].PollOptionId" value="" />
+                <input name="Options[${optionCount}].OptionText" class="form-control" placeholder="Option ${optionCount + 1}" />`;
+            container.appendChild(div);
+            optionCount++;
+        });
+    </script>
+}

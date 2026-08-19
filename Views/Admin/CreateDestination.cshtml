@@ -10,6 +10,7 @@
             <ol>
                 <li><a asp-controller="Home" asp-action="Index">Home</a></li>
                 <li><a asp-controller="Admin" asp-action="AdminDashboard">Admin</a></li>
+                <li><a asp-controller="Admin" asp-action="ManageDestinations">Manage Destinations</a></li>
                 <li class="current">Create Destination</li>
             </ol>
         </nav>
@@ -47,7 +48,7 @@
                         </div>
 
                         <button type="submit" class="btn btn-primary">Create &amp; Publish</button>
-                        <a asp-controller="Admin" asp-action="DestinationHistory" class="btn btn-outline-secondary">Cancel</a>
+                        <a asp-controller="Admin" asp-action="ManageDestinations" class="btn btn-outline-secondary">Cancel</a>
                     </form>
                 </div>
             </div>

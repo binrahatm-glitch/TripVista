@@ -25,6 +25,74 @@ namespace TripVista.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> Payment(Guid bookingId)
+        {
+            var booking = await _bookingDAO.GetByIdAsync(bookingId);
+            var userId = Guid.Parse(HttpContext.Session.GetString("id")!);
+
+            if (booking == null || booking.UserId != userId)
+            {
+                return NotFound();
+            }
+
+            if (booking.Status != "PendingPayment")
+            {
+                TempData["msg"] = "This booking has already been paid for.";
+                return RedirectToAction("Bookings");
+            }
+
+            var vm = new PaymentViewModel
+            {
+                BookingId = booking.BookingId,
+                PackageTitle = booking.Package?.Title ?? string.Empty,
+                TravelersCount = booking.TravelersCount,
+                Amount = booking.TotalPrice ?? 0
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Payment(PaymentViewModel vm)
+        {
+            var booking = await _bookingDAO.GetByIdAsync(vm.BookingId);
+            var userId = Guid.Parse(HttpContext.Session.GetString("id")!);
+
+            if (booking == null || booking.UserId != userId)
+            {
+                return NotFound();
+            }
+
+            if (booking.Status != "PendingPayment")
+            {
+                TempData["msg"] = "This booking has already been paid for.";
+                return RedirectToAction("Bookings");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                vm.PackageTitle = booking.Package?.Title ?? string.Empty;
+                vm.TravelersCount = booking.TravelersCount;
+                vm.Amount = booking.TotalPrice ?? 0;
+                return View(vm);
+            }
+
+            // Demo payment gateway: no card data is stored, we just simulate a successful charge.
+            var paymentReference = $"DEMO-{Guid.NewGuid().ToString("N")[..12].ToUpperInvariant()}";
+            var (success, error) = await _bookingDAO.CompletePaymentAsync(booking.BookingId, userId, paymentReference);
+
+            if (!success)
+            {
+                TempData["Error"] = error;
+                return RedirectToAction("Bookings");
+            }
+
+            TempData["msg"] = "Payment successful! Your booking is now confirmed.";
+            return RedirectToAction("AddTravelerDetails", new { bookingId = booking.BookingId });
+        }
+
+        [HttpGet]
         public async Task<IActionResult> AddTravelerDetails(Guid bookingId)
         {
             var booking = await _bookingDAO.GetByIdAsync(bookingId);
@@ -33,6 +101,11 @@ namespace TripVista.Controllers
             if (booking == null || booking.UserId != userId)
             {
                 return NotFound();
+            }
+
+            if (booking.Status == "PendingPayment")
+            {
+                return RedirectToAction("Payment", new { bookingId = booking.BookingId });
             }
 
             var vm = new AddTravelerDetailsViewModel
@@ -69,7 +142,8 @@ namespace TripVista.Controllers
             {
                 FullName = t.FullName,
                 Age = t.Age,
-                CNICOrPassportNumber = t.CNICOrPassportNumber
+                CNICOrPassportNumber = t.CNICOrPassportNumber,
+                ContactNumber = t.ContactNumber
             }).ToList();
 
             await _bookingDAO.AddTravelerDetailsAsync(booking.BookingId, travelers);

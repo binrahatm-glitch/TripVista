@@ -33,7 +33,7 @@ namespace TripVista.Services
                 .FirstOrDefaultAsync(b => b.BookingId == id);
         }
 
-        public async Task<Bookings> CreateConfirmedBookingAsync(Guid userId, Guid packageId, int numberOfTravelers, decimal totalPrice)
+        public async Task<Bookings> CreatePendingBookingAsync(Guid userId, Guid packageId, int numberOfTravelers, decimal totalPrice)
         {
             var booking = new Bookings
             {
@@ -42,7 +42,8 @@ namespace TripVista.Services
                 PackageId = packageId,
                 TravelersCount = numberOfTravelers,
                 TotalPrice = totalPrice,
-                Status = "Confirmed",
+                Status = "PendingPayment",
+                PaymentStatus = "Pending",
                 AreTravelerDetailsSubmitted = false,
                 BookingDate = DateTime.Now
             };
@@ -50,6 +51,24 @@ namespace TripVista.Services
             await _context.Bookings.AddAsync(booking);
             await _context.SaveChangesAsync();
             return booking;
+        }
+
+        public async Task<(bool success, string? error)> CompletePaymentAsync(Guid bookingId, Guid userId, string paymentReference)
+        {
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.BookingId == bookingId);
+            if (booking == null || booking.UserId != userId)
+                return (false, "Booking not found.");
+
+            if (booking.Status != "PendingPayment")
+                return (false, "This booking is not awaiting payment.");
+
+            booking.Status = "Confirmed";
+            booking.PaymentStatus = "Paid";
+            booking.PaymentReference = paymentReference;
+            booking.PaidAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return (true, null);
         }
 
         public async Task<bool> AddTravelerDetailsAsync(Guid bookingId, List<BookingTravelers> travelers)
@@ -77,6 +96,15 @@ namespace TripVista.Services
 
             if (booking == null || booking.UserId != requestingUserId)
                 return (false, "Booking not found.");
+
+            if (booking.Status == "PendingPayment")
+            {
+                // No payment has been captured yet, so it can be abandoned freely.
+                booking.Status = "Cancelled";
+                booking.CancelledAt = DateTime.Now;
+                await _context.SaveChangesAsync();
+                return (true, null);
+            }
 
             if (booking.Status != "Confirmed")
                 return (false, "Only confirmed bookings can be cancelled.");

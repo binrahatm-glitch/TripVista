@@ -21,6 +21,40 @@ namespace TripVista.Services
             return destination;
         }
 
+        public async Task<bool> UpdateAsync(Destinations destination)
+        {
+            var existing = await _context.Destinations.FindAsync(destination.DestinationId);
+            if (existing == null) return false;
+
+            existing.Name = destination.Name;
+            existing.Location = destination.Location;
+            existing.Description = destination.Description;
+            if (destination.ImageUrl != null)
+            {
+                existing.ImageUrl = destination.ImageUrl;
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> IsLinkedToPackageAsync(Guid id)
+        {
+            return await _context.PackageDestinations.AnyAsync(pd => pd.DestinationId == id);
+        }
+
+        public async Task<bool> DeleteAsync(Guid id)
+        {
+            if (await IsLinkedToPackageAsync(id)) return false;
+
+            var destination = await _context.Destinations.FindAsync(id);
+            if (destination == null) return false;
+
+            _context.Destinations.Remove(destination);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<Destinations?> GetByIdAsync(Guid id)
         {
             return await _context.Destinations

@@ -13,6 +13,9 @@ namespace TripVista.Models.Entities
 
         public string? ImagePath { get; set; }
 
+        [MaxLength(50)]
+        public string? Region { get; set; } // Northern, Coastal, Urban, Desert - used as an ML training feature
+
         [Column(TypeName = "decimal(18,2)")]
         public decimal PricePerPerson { get; set; }
 

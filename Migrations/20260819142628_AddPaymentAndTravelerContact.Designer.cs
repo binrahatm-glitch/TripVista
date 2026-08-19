@@ -12,8 +12,8 @@ using TripVista.Data;
 namespace TripVista.Migrations
 {
     [DbContext(typeof(SmartTripContext))]
-    [Migration("20260715133050_AddPackageDestinations")]
-    partial class AddPackageDestinations
+    [Migration("20260819142628_AddPaymentAndTravelerContact")]
+    partial class AddPaymentAndTravelerContact
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -41,6 +41,11 @@ namespace TripVista.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ContactNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -71,6 +76,16 @@ namespace TripVista.Migrations
 
                     b.Property<Guid>("PackageId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PaymentReference")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
                         .IsRequired()

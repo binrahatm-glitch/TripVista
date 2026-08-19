@@ -66,6 +66,22 @@ namespace TripVista.Services
             return true;
         }
 
+        // Update Profile (name / avatar only - does not touch credentials/role)
+        public async Task<bool> UpdateProfileAsync(Guid userId, string fullName, string? avatarPath)
+        {
+            var existing = await _context.Users.FindAsync(userId);
+            if (existing == null) return false;
+
+            existing.FullName = fullName;
+            if (avatarPath != null)
+            {
+                existing.AvatarPath = avatarPath;
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         // Delete User
         public async Task<bool> DeleteUserAsync(Guid id)
         {

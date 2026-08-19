@@ -45,6 +45,61 @@ namespace TripVista.Services
             return poll;
         }
 
+        public async Task<(bool success, string? error)> UpdateAsync(Guid pollId, string question, List<(Guid? OptionId, string Text, bool Remove)> options)
+        {
+            var poll = await _context.Polls.Include(p => p.Options).FirstOrDefaultAsync(p => p.PollId == pollId);
+            if (poll == null) return (false, "Poll not found.");
+
+            var voteCounts = await _context.PollVotes
+                .Where(v => v.PollId == pollId)
+                .GroupBy(v => v.PollOptionId)
+                .Select(g => new { OptionId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.OptionId, x => x.Count);
+
+            var toRemove = options.Where(o => o.OptionId.HasValue && o.Remove).ToList();
+            foreach (var r in toRemove)
+            {
+                if (voteCounts.ContainsKey(r.OptionId!.Value))
+                {
+                    var text = poll.Options!.First(o => o.PollOptionId == r.OptionId.Value).OptionText;
+                    return (false, $"Cannot remove \"{text}\" - it already has votes.");
+                }
+            }
+
+            var remainingExisting = poll.Options!.Count(o => !toRemove.Any(r => r.OptionId == o.PollOptionId));
+            var newCount = options.Count(o => !o.OptionId.HasValue && !o.Remove && !string.IsNullOrWhiteSpace(o.Text));
+            if (remainingExisting + newCount < 2)
+                return (false, "A poll needs at least 2 options.");
+
+            poll.Question = question;
+
+            foreach (var r in toRemove)
+            {
+                var entity = poll.Options!.First(o => o.PollOptionId == r.OptionId!.Value);
+                _context.PollOptions.Remove(entity);
+            }
+
+            foreach (var o in options.Where(o => o.OptionId.HasValue && !o.Remove && !string.IsNullOrWhiteSpace(o.Text)))
+            {
+                var entity = poll.Options!.FirstOrDefault(x => x.PollOptionId == o.OptionId!.Value);
+                if (entity != null)
+                    entity.OptionText = o.Text;
+            }
+
+            foreach (var o in options.Where(o => !o.OptionId.HasValue && !o.Remove && !string.IsNullOrWhiteSpace(o.Text)))
+            {
+                _context.PollOptions.Add(new PollOptions
+                {
+                    PollOptionId = Guid.NewGuid(),
+                    PollId = pollId,
+                    OptionText = o.Text
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
         public async Task<bool> HasVotesAsync(Guid pollId)
         {
             return await _context.PollVotes.AnyAsync(v => v.PollId == pollId);

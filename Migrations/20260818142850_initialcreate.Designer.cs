@@ -12,8 +12,8 @@ using TripVista.Data;
 namespace TripVista.Migrations
 {
     [DbContext(typeof(SmartTripContext))]
-    [Migration("20260713104012_rework_destinations_packages_bookings_add_polls")]
-    partial class rework_destinations_packages_bookings_add_polls
+    [Migration("20260818142850_initialcreate")]
+    partial class initialcreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -172,6 +172,30 @@ namespace TripVista.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("otp_verifications", (string)null);
+                });
+
+            modelBuilder.Entity("TripVista.Models.Entities.PackageDestinations", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("DestinationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PackageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("SequenceNo")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DestinationId");
+
+                    b.HasIndex("PackageId");
+
+                    b.ToTable("package_destinations", (string)null);
                 });
 
             modelBuilder.Entity("TripVista.Models.Entities.Packages", b =>
@@ -386,6 +410,25 @@ namespace TripVista.Migrations
                     b.Navigation("SubmittedByUser");
                 });
 
+            modelBuilder.Entity("TripVista.Models.Entities.PackageDestinations", b =>
+                {
+                    b.HasOne("TripVista.Models.Entities.Destinations", "Destination")
+                        .WithMany("PackageDestinations")
+                        .HasForeignKey("DestinationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TripVista.Models.Entities.Packages", "Package")
+                        .WithMany("PackageDestinations")
+                        .HasForeignKey("PackageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Destination");
+
+                    b.Navigation("Package");
+                });
+
             modelBuilder.Entity("TripVista.Models.Entities.Packages", b =>
                 {
                     b.HasOne("TripVista.Models.Entities.Users", "CreatedByAdmin")
@@ -451,9 +494,16 @@ namespace TripVista.Migrations
                     b.Navigation("BookingTravelers");
                 });
 
+            modelBuilder.Entity("TripVista.Models.Entities.Destinations", b =>
+                {
+                    b.Navigation("PackageDestinations");
+                });
+
             modelBuilder.Entity("TripVista.Models.Entities.Packages", b =>
                 {
                     b.Navigation("Bookings");
+
+                    b.Navigation("PackageDestinations");
                 });
 
             modelBuilder.Entity("TripVista.Models.Entities.PollOptions", b =>

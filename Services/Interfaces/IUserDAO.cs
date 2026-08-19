@@ -9,6 +9,7 @@ namespace TripVista.Services.Interfaces
         Task<Users?> GetUserByEmailAsync(string email);
         Task<List<Users>> GetAllUsersAsync();
         Task<bool> UpdateUserAsync(Users user);
+        Task<bool> UpdateProfileAsync(Guid userId, string fullName, string? avatarPath);
         Task<bool> DeleteUserAsync(Guid id);
         Task<Users?> ValidateLoginAsync(string email, string password);
         Task<bool> ChangePasswordAsync(Guid userId, string newPassword);
