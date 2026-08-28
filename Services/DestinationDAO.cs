@@ -124,5 +124,20 @@ namespace TripVista.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<List<Destinations>> SearchAsyncByName(string name)
+        {
+            return await _context.Destinations
+                .Where(d => d.Status == "Approved" && d.Name == name)
+                .OrderByDescending(d => d.ReviewedAt)
+                .ToListAsync();
+        }
+        public async Task<List<Destinations>> SearchAsyncByLocation(string location)
+        {
+            return await _context.Destinations
+                .Where(d => d.Status == "Approved" && d.Location == location)
+                .OrderByDescending(d => d.ReviewedAt)
+                .ToListAsync();
+        }
     }
 }

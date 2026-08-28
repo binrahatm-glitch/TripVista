@@ -231,6 +231,23 @@ namespace TripVista.Controllers
                 return View(dest);
             }
 
+            List<Destinations> DuplicateByName= await _destinationDAO.SearchAsyncByName(dest.Name);
+            List<Destinations> DuplicateBylocation = await _destinationDAO.SearchAsyncByLocation(dest.Location);
+
+
+            if(DuplicateByName.Count > 0)
+            {
+                ModelState.AddModelError("Name", "A destination with this name already exists.");
+                return View(dest);
+            }
+
+            if(DuplicateBylocation.Count > 0)
+            {
+                ModelState.AddModelError("Location", "A destination with this location already exists.");
+                return View(dest);
+            }
+
+
             var imageUrl = await SaveUploadedImageAsync(dest.Image);
 
             var adminId = Guid.Parse(HttpContext.Session.GetString("id")!);
