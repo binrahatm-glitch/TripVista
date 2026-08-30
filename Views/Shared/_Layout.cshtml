@@ -52,6 +52,7 @@
                     {
                         <li><a asp-controller="Admin" asp-action="AdminDashboard" class="@(IsActive("Admin", "AdminDashboard") ? "active" : "")">Dashboard</a></li>
                         <li><a asp-controller="Admin" asp-action="Packages" class="@(IsActive("Admin", "Packages") || IsActive("Admin", "CreatePackage") || IsActive("Admin", "EditPackage") ? "active" : "")">Packages</a></li>
+                        <li><a asp-controller="Admin" asp-action="GetAllBookings" class="@(IsActive("Admin", "GetAllBookings") ? "active" : "")">Manage Bookings</a></li>
                         <li><a asp-controller="Admin" asp-action="ManageDestinations" class="@(IsActive("Admin", "ManageDestinations") || IsActive("Admin", "CreateDestination") ? "active" : "")">Manage Destinations</a></li>
                         <li><a asp-controller="Admin" asp-action="DestinationQueue" class="@(IsActive("Admin", "DestinationQueue") ? "active" : "")">Destination Queue</a></li>
                         <li><a asp-controller="Poll" asp-action="ManagePolls" class="@(IsActive("Poll", "ManagePolls") || IsActive("Poll", "CreatePoll") || IsActive("Poll", "Results") ? "active" : "")">Manage Polls</a></li>

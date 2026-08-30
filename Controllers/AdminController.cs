@@ -13,13 +13,15 @@ namespace TripVista.Controllers
         private readonly IDestinationDAO _destinationDAO;
         private readonly IReportingDAO _reportingDAO;
         private readonly IBudgetModelTrainer _budgetModelTrainer;
+        private readonly IBookingDAO _bookingDAO;
 
-        public AdminController(IPackageDAO packageDAO, IDestinationDAO destinationDAO, IReportingDAO reportingDAO, IBudgetModelTrainer budgetModelTrainer)
+        public AdminController(IPackageDAO packageDAO, IDestinationDAO destinationDAO, IReportingDAO reportingDAO, IBudgetModelTrainer budgetModelTrainer, IBookingDAO bookingDAO)
         {
             _packageDAO = packageDAO;
             _destinationDAO = destinationDAO;
             _reportingDAO = reportingDAO;
             _budgetModelTrainer = budgetModelTrainer;
+            _bookingDAO = bookingDAO;
         }
 
         public async Task<IActionResult> AdminDashboard()
@@ -231,17 +233,17 @@ namespace TripVista.Controllers
                 return View(dest);
             }
 
-            List<Destinations> DuplicateByName= await _destinationDAO.SearchAsyncByName(dest.Name);
+            List<Destinations> DuplicateByName = await _destinationDAO.SearchAsyncByName(dest.Name);
             List<Destinations> DuplicateBylocation = await _destinationDAO.SearchAsyncByLocation(dest.Location);
 
 
-            if(DuplicateByName.Count > 0)
+            if (DuplicateByName.Count > 0)
             {
                 ModelState.AddModelError("Name", "A destination with this name already exists.");
                 return View(dest);
             }
 
-            if(DuplicateBylocation.Count > 0)
+            if (DuplicateBylocation.Count > 0)
             {
                 ModelState.AddModelError("Location", "A destination with this location already exists.");
                 return View(dest);
@@ -359,6 +361,16 @@ namespace TripVista.Controllers
             await _destinationDAO.RejectAsync(id, adminId, remarks);
             TempData["msg"] = "Destination rejected.";
             return RedirectToAction("DestinationQueue");
+        }
+
+        // ------------------- Bookings -------------------
+        [HttpGet]
+        public async Task<IActionResult> GetAllBookings()
+        {
+            List<Bookings> bookings = await _bookingDAO.GetBookings();
+           
+
+            return View(bookings);
         }
     }
 }

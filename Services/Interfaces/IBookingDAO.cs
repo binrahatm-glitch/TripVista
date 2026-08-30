@@ -4,6 +4,7 @@ namespace TripVista.Services.Interfaces
 {
     public interface IBookingDAO
     {
+        Task<List<Bookings>> GetBookings();
         Task<List<Bookings>> GetByUserIdAsync(Guid userId);
         Task<Bookings?> GetByIdAsync(Guid id);
         Task<Bookings> CreatePendingBookingAsync(Guid userId, Guid packageId, int numberOfTravelers, decimal totalPrice);

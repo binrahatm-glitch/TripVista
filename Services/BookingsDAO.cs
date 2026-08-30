@@ -16,6 +16,15 @@ namespace TripVista.Services
             _context = context;
         }
 
+
+        public async Task<List<Bookings>> GetBookings()
+        {
+            return await _context.Bookings
+               .Include(b => b.Package)
+               .OrderByDescending(b => b.BookingDate)
+               .ToListAsync();
+        }
+
         public async Task<List<Bookings>> GetByUserIdAsync(Guid userId)
         {
             return await _context.Bookings
