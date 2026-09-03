@@ -368,9 +368,20 @@ namespace TripVista.Controllers
         public async Task<IActionResult> GetAllBookings()
         {
             List<Bookings> bookings = await _bookingDAO.GetBookings();
-           
+
 
             return View(bookings);
+
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetBookingDetails(Guid bookingId)
+        {
+            var booking = await _bookingDAO.GetByIdAsync(bookingId);
+            if (booking == null)
+            {
+                return NotFound();
+            }
+            return View(booking);
         }
     }
 }

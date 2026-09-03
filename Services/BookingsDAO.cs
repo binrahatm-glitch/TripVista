@@ -20,6 +20,7 @@ namespace TripVista.Services
         public async Task<List<Bookings>> GetBookings()
         {
             return await _context.Bookings
+               .Include(b => b.User)
                .Include(b => b.Package)
                .OrderByDescending(b => b.BookingDate)
                .ToListAsync();
@@ -37,6 +38,7 @@ namespace TripVista.Services
         public async Task<Bookings?> GetByIdAsync(Guid id)
         {
             return await _context.Bookings
+                .Include(b => b.User)
                 .Include(b => b.Package)
                 .Include(b => b.BookingTravelers)
                 .FirstOrDefaultAsync(b => b.BookingId == id);
