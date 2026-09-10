@@ -53,6 +53,14 @@ namespace TripVista.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task<bool> ExistsByTitleAsync(string title, Guid? excludeId)
+        {
+            var normalized = title.Trim().ToLower();
+            return await _context.Packages
+                .Where(p => excludeId == null || p.PackageId != excludeId)
+                .AnyAsync(p => p.Title.Trim().ToLower() == normalized);
+        }
+
         public async Task<bool> UpdateAsync(Packages pkg, List<Guid> destinationIds)
         {
             var existing = await _context.Packages.FindAsync(pkg.PackageId);

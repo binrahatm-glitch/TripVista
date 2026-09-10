@@ -38,6 +38,13 @@ namespace TripVista.Controllers
                 return NotFound();
             }
 
+            var userId = Guid.Parse(HttpContext.Session.GetString("id")!);
+            if (await _bookingDAO.HasActiveBookingAsync(userId, id))
+            {
+                TempData["Error"] = "You already have an active booking for this package.";
+                return RedirectToAction("ViewDetails", new { id });
+            }
+
             var vm = new AddBookingViewModel
             {
                 PackageId = package.PackageId,
@@ -75,6 +82,13 @@ namespace TripVista.Controllers
             }
 
             var userId = Guid.Parse(HttpContext.Session.GetString("id")!);
+
+            if (await _bookingDAO.HasActiveBookingAsync(userId, package.PackageId))
+            {
+                ModelState.AddModelError(string.Empty, "You already have an active booking for this package.");
+                return View(vm);
+            }
+
             var totalPrice = package.PricePerPerson * vm.NumberOfTravelers;
 
             var booking = await _bookingDAO.CreatePendingBookingAsync(userId, package.PackageId, vm.NumberOfTravelers, totalPrice);

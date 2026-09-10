@@ -13,9 +13,8 @@ namespace TripVista.Services.Interfaces
         Task<List<Destinations>> GetApprovedAsync();
         Task<List<Destinations>> GetPendingAsync();
         Task<List<Destinations>> GetReviewedAsync();
-        Task<bool> ApproveAsync(Guid id, Guid adminId, string? remarks);
+        Task<(bool success, string? error)> ApproveAsync(Guid id, Guid adminId, string? remarks);
         Task<bool> RejectAsync(Guid id, Guid adminId, string remarks);
-        Task<List<Destinations>> SearchAsyncByName(string query);
-        Task<List<Destinations>> SearchAsyncByLocation(string location);
+        Task<List<Destinations>> SearchAsyncByName(string name, Guid? excludeId = null);
     }
 }

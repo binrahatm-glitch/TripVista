@@ -1,0 +1,94 @@
+@model TripVista.Models.DTO.EditBookingViewModel
+@{
+    ViewData["Title"] = "Edit Booking";
+}
+
+<div class="page-title dark-background" data-aos="fade" style="background-image: url('@Url.Content("~/theme/assets/img/travel/showcase-3.webp")');">
+    <div class="container position-relative">
+        <h1>Edit Booking</h1>
+        <nav class="breadcrumbs">
+            <ol>
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li><a asp-controller="Admin" asp-action="GetAllBookings">Manage Bookings</a></li>
+                <li class="current">Edit Booking</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="tv-section">
+    <div class="container" data-aos="fade-up">
+
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="tv-card">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="small text-muted mb-1">Booking ID</div>
+                            <div class="fw-semibold">#@Model.BookingId.ToString().Substring(0, 8).ToUpper()</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted mb-1">Customer</div>
+                            <div class="fw-semibold">@Model.CustomerName</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="small text-muted mb-1">Package</div>
+                            <div class="fw-semibold">@Model.PackageTitle <span class="text-muted">(PKR @Model.PricePerPerson.ToString("N0") / person)</span></div>
+                        </div>
+                    </div>
+
+                    <form asp-action="EditBooking" method="post">
+                        <input type="hidden" asp-for="BookingId" />
+                        <input type="hidden" asp-for="CustomerName" />
+                        <input type="hidden" asp-for="PackageTitle" />
+                        <input type="hidden" asp-for="PricePerPerson" />
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="TravelersCount" class="form-label">Travelers Count</label>
+                                <input asp-for="TravelersCount" type="number" min="1" id="travelersCount" class="form-control" />
+                                <span asp-validation-for="TravelersCount" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="TotalPrice" class="form-label">Total Price</label>
+                                <input asp-for="TotalPrice" type="number" step="0.01" id="totalPrice" class="form-control" />
+                                <span asp-validation-for="TotalPrice" class="text-danger"></span>
+                                <div class="form-text">Auto-calculated from the package rate — override it if needed.</div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info small">
+                            Changing the traveler count may take you to a follow-up step to add or remove traveler details.
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Continue</button>
+                        <a asp-controller="Admin" asp-action="GetAllBookings" class="btn btn-outline-secondary">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        const pricePerPerson = @Model.PricePerPerson.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        const travelersInput = document.getElementById("travelersCount");
+        const priceInput = document.getElementById("totalPrice");
+        let priceManuallyEdited = false;
+
+        priceInput.addEventListener("input", function () {
+            priceManuallyEdited = true;
+        });
+
+        travelersInput.addEventListener("input", function () {
+            if (!priceManuallyEdited) {
+                const count = parseInt(travelersInput.value || "0");
+                priceInput.value = (pricePerPerson * count).toFixed(2);
+            }
+        });
+    </script>
+}

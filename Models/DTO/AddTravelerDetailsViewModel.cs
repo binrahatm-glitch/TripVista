@@ -7,7 +7,7 @@ namespace TripVista.Models.DTO
         [Required, MaxLength(100)]
         public string FullName { get; set; } = string.Empty;
 
-        [Range(0, 120)]
+        [Range(1, 120, ErrorMessage = "Age must be greater than 0.")]
         public int Age { get; set; }
 
         [Required, MaxLength(50)]

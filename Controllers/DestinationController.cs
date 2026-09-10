@@ -51,6 +51,13 @@ namespace TripVista.Controllers
                 return View(dest);
             }
 
+            var duplicates = await _destinationDAO.SearchAsyncByName(dest.Name);
+            if (duplicates.Count > 0)
+            {
+                ModelState.AddModelError(nameof(dest.Name), "A destination with this name already exists.");
+                return View(dest);
+            }
+
             string? imageUrl = null;
             if (dest.Image != null)
             {

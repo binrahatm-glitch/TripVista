@@ -69,6 +69,12 @@ namespace TripVista.Controllers
             if (!ModelState.IsValid)
                 return View(vm);
 
+            if (await _packageDAO.ExistsByTitleAsync(vm.Title, null))
+            {
+                ModelState.AddModelError(nameof(vm.Title), "A package with this title already exists.");
+                return View(vm);
+            }
+
             var adminId = Guid.Parse(HttpContext.Session.GetString("id")!);
 
             var package = new Packages
@@ -161,6 +167,12 @@ namespace TripVista.Controllers
             if (!ModelState.IsValid)
                 return View(vm);
 
+            if (await _packageDAO.ExistsByTitleAsync(vm.Title, vm.PackageId))
+            {
+                ModelState.AddModelError(nameof(vm.Title), "A package with this title already exists.");
+                return View(vm);
+            }
+
             var package = new Packages
             {
                 PackageId = vm.PackageId.Value,
@@ -233,22 +245,12 @@ namespace TripVista.Controllers
                 return View(dest);
             }
 
-            List<Destinations> DuplicateByName = await _destinationDAO.SearchAsyncByName(dest.Name);
-            List<Destinations> DuplicateBylocation = await _destinationDAO.SearchAsyncByLocation(dest.Location);
-
-
-            if (DuplicateByName.Count > 0)
+            var duplicates = await _destinationDAO.SearchAsyncByName(dest.Name);
+            if (duplicates.Count > 0)
             {
-                ModelState.AddModelError("Name", "A destination with this name already exists.");
+                ModelState.AddModelError(nameof(dest.Name), "A destination with this name already exists.");
                 return View(dest);
             }
-
-            if (DuplicateBylocation.Count > 0)
-            {
-                ModelState.AddModelError("Location", "A destination with this location already exists.");
-                return View(dest);
-            }
-
 
             var imageUrl = await SaveUploadedImageAsync(dest.Image);
 
@@ -312,6 +314,13 @@ namespace TripVista.Controllers
             if (!ModelState.IsValid)
                 return View(vm);
 
+            var duplicates = await _destinationDAO.SearchAsyncByName(vm.Name, vm.DestinationId);
+            if (duplicates.Count > 0)
+            {
+                ModelState.AddModelError(nameof(vm.Name), "A destination with this name already exists.");
+                return View(vm);
+            }
+
             var destination = new Destinations
             {
                 DestinationId = vm.DestinationId,
@@ -342,8 +351,8 @@ namespace TripVista.Controllers
         public async Task<IActionResult> ApproveDestination(Guid id, string? remarks)
         {
             var adminId = Guid.Parse(HttpContext.Session.GetString("id")!);
-            await _destinationDAO.ApproveAsync(id, adminId, remarks);
-            TempData["msg"] = "Destination approved.";
+            var (success, error) = await _destinationDAO.ApproveAsync(id, adminId, remarks);
+            TempData[success ? "msg" : "Error"] = success ? "Destination approved." : error;
             return RedirectToAction("DestinationQueue");
         }
 
@@ -382,6 +391,180 @@ namespace TripVista.Controllers
                 return NotFound();
             }
             return View(booking);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditBooking(Guid id)
+        {
+            var booking = await _bookingDAO.GetByIdAsync(id);
+            if (booking == null) return NotFound();
+
+            var vm = new EditBookingViewModel
+            {
+                BookingId = booking.BookingId,
+                CustomerName = booking.User?.FullName ?? "N/A",
+                PackageTitle = booking.Package?.Title ?? "N/A",
+                PricePerPerson = booking.Package?.PricePerPerson ?? 0,
+                TravelersCount = booking.TravelersCount,
+                TotalPrice = booking.TotalPrice
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditBooking(EditBookingViewModel vm)
+        {
+            if (!ModelState.IsValid)
+                return View(vm);
+
+            if (vm.TotalPrice == null)
+            {
+                ModelState.AddModelError(nameof(vm.TotalPrice), "Total price is required.");
+                return View(vm);
+            }
+
+            var booking = await _bookingDAO.GetByIdAsync(vm.BookingId);
+            if (booking == null) return NotFound();
+
+            var existingTravelersCount = booking.BookingTravelers?.Count ?? 0;
+
+            // No traveler records exist yet, or the count didn't actually change against
+            // what's on file — nothing to reconcile, just persist directly.
+            if (!booking.AreTravelerDetailsSubmitted || vm.TravelersCount == existingTravelersCount)
+            {
+                var (success, error) = await _bookingDAO.AdminUpdateTravelersAndPriceAsync(vm.BookingId, vm.TravelersCount, vm.TotalPrice);
+                TempData[success ? "msg" : "Error"] = success ? "Booking updated successfully." : error;
+                return RedirectToAction("GetAllBookings");
+            }
+
+            return RedirectToAction("ManageBookingTravelers", new { id = vm.BookingId, newCount = vm.TravelersCount, newPrice = vm.TotalPrice });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ManageBookingTravelers(Guid id, int newCount, decimal? newPrice)
+        {
+            if (newCount < 1 || newPrice < 0)
+            {
+                TempData["Error"] = "Invalid traveler count or price.";
+                return RedirectToAction("GetAllBookings");
+            }
+
+            var booking = await _bookingDAO.GetByIdAsync(id);
+            if (booking == null) return NotFound();
+
+            var existingTravelers = booking.BookingTravelers?.ToList() ?? new List<BookingTravelers>();
+
+            var vm = new ManageBookingTravelersViewModel
+            {
+                BookingId = id,
+                PackageTitle = booking.Package?.Title ?? "N/A",
+                NewCount = newCount,
+                NewPrice = newPrice,
+                ExistingTravelers = existingTravelers.Select(t => new ExistingTravelerInfo
+                {
+                    Id = t.Id,
+                    FullName = t.FullName,
+                    Age = t.Age,
+                    CNICOrPassportNumber = t.CNICOrPassportNumber,
+                    ContactNumber = t.ContactNumber
+                }).ToList(),
+                AdditionalTravelers = existingTravelers.Count < newCount
+                    ? Enumerable.Range(0, newCount - existingTravelers.Count).Select(_ => new TravelerDetailInput()).ToList()
+                    : new List<TravelerDetailInput>()
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ManageBookingTravelers(ManageBookingTravelersViewModel vm)
+        {
+            if (!ModelState.IsValid)
+                return View(vm);
+
+            if (vm.NewPrice == null)
+            {
+                ModelState.AddModelError(nameof(vm.NewPrice), "Price is required.");
+                return View(vm);
+            }
+
+            var newTravelers = vm.AdditionalTravelers.Select(t => new BookingTravelers
+            {
+                FullName = t.FullName,
+                Age = t.Age,
+                CNICOrPassportNumber = t.CNICOrPassportNumber,
+                ContactNumber = t.ContactNumber
+            }).ToList();
+
+            var (success, error) = await _bookingDAO.AdminAddTravelersAsync(vm.BookingId, newTravelers, vm.NewCount, vm.NewPrice);
+            TempData[success ? "msg" : "Error"] = success ? "Booking updated successfully." : error;
+            return RedirectToAction("GetAllBookings");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveBookingTraveler(Guid bookingId, Guid travelerId, int newCount, decimal? newPrice)
+        {
+            if (newCount < 1 || newPrice < 0)
+            {
+                TempData["Error"] = "Invalid traveler count or price.";
+                return RedirectToAction("GetAllBookings");
+            }
+
+            var (success, error, remainingCount) = await _bookingDAO.RemoveTravelerAsync(bookingId, travelerId, newCount, newPrice);
+
+            if (!success)
+            {
+                TempData["Error"] = error;
+                return RedirectToAction("GetAllBookings");
+            }
+
+            if (remainingCount <= newCount)
+            {
+                TempData["msg"] = "Booking updated successfully.";
+                return RedirectToAction("GetAllBookings");
+            }
+
+            return RedirectToAction("ManageBookingTravelers", new { id = bookingId, newCount, newPrice });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmBooking(Guid id)
+        {
+            var (success, error) = await _bookingDAO.AdminConfirmAsync(id);
+            TempData[success ? "msg" : "Error"] = success ? "Booking confirmed successfully." : error;
+            return RedirectToAction("GetAllBookings");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CompleteBooking(Guid id)
+        {
+            var (success, error) = await _bookingDAO.AdminCompleteAsync(id);
+            TempData[success ? "msg" : "Error"] = success ? "Booking marked as completed." : error;
+            return RedirectToAction("GetAllBookings");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelBooking(Guid id)
+        {
+            var (success, error) = await _bookingDAO.AdminCancelAsync(id);
+            TempData[success ? "msg" : "Error"] = success ? "Booking cancelled successfully." : error;
+            return RedirectToAction("GetAllBookings");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkBookingPaid(Guid id)
+        {
+            var (success, error) = await _bookingDAO.AdminMarkPaidAsync(id);
+            TempData[success ? "msg" : "Error"] = success ? "Booking marked as paid." : error;
+            return RedirectToAction("GetAllBookings");
         }
     }
 }

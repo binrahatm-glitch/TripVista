@@ -97,10 +97,14 @@ namespace TripVista.Services
                 .ToListAsync();
         }
 
-        public async Task<bool> ApproveAsync(Guid id, Guid adminId, string? remarks)
+        public async Task<(bool success, string? error)> ApproveAsync(Guid id, Guid adminId, string? remarks)
         {
             var destination = await _context.Destinations.FindAsync(id);
-            if (destination == null || destination.Status != "Pending") return false;
+            if (destination == null || destination.Status != "Pending") return (false, "Destination not found or not pending review.");
+
+            var duplicates = await SearchAsyncByName(destination.Name, id);
+            if (duplicates.Count > 0)
+                return (false, "A destination with this name is already approved.");
 
             destination.Status = "Approved";
             destination.AdminRemarks = remarks;
@@ -108,7 +112,7 @@ namespace TripVista.Services
             destination.ReviewedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
-            return true;
+            return (true, null);
         }
 
         public async Task<bool> RejectAsync(Guid id, Guid adminId, string remarks)
@@ -125,17 +129,12 @@ namespace TripVista.Services
             return true;
         }
 
-        public async Task<List<Destinations>> SearchAsyncByName(string name)
+        public async Task<List<Destinations>> SearchAsyncByName(string name, Guid? excludeId = null)
         {
+            var normalized = name.Trim().ToLower();
             return await _context.Destinations
-                .Where(d => d.Status == "Approved" && d.Name == name)
-                .OrderByDescending(d => d.ReviewedAt)
-                .ToListAsync();
-        }
-        public async Task<List<Destinations>> SearchAsyncByLocation(string location)
-        {
-            return await _context.Destinations
-                .Where(d => d.Status == "Approved" && d.Location == location)
+                .Where(d => d.Status == "Approved" && d.Name.Trim().ToLower() == normalized)
+                .Where(d => excludeId == null || d.DestinationId != excludeId)
                 .OrderByDescending(d => d.ReviewedAt)
                 .ToListAsync();
         }

@@ -64,6 +64,15 @@ namespace TripVista.Services
             return booking;
         }
 
+        public async Task<bool> HasActiveBookingAsync(Guid userId, Guid packageId)
+        {
+            return await _context.Bookings.AnyAsync(b =>
+                b.UserId == userId &&
+                b.PackageId == packageId &&
+                b.Status != "Completed" &&
+                b.Status != "Cancelled");
+        }
+
         public async Task<(bool success, string? error)> CompletePaymentAsync(Guid bookingId, Guid userId, string paymentReference)
         {
             var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.BookingId == bookingId);
@@ -125,6 +134,137 @@ namespace TripVista.Services
 
             booking.Status = "Cancelled";
             booking.CancelledAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<(bool success, string? error)> AdminUpdateTravelersAndPriceAsync(Guid bookingId, int travelersCount, decimal? totalPrice)
+        {
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.BookingId == bookingId);
+            if (booking == null)
+                return (false, "Booking not found.");
+
+            booking.TravelersCount = travelersCount;
+            booking.TotalPrice = totalPrice;
+
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<(bool success, string? error)> AdminAddTravelersAsync(Guid bookingId, List<BookingTravelers> newTravelers, int newCount, decimal? newPrice)
+        {
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.BookingId == bookingId);
+            if (booking == null)
+                return (false, "Booking not found.");
+
+            foreach (var traveler in newTravelers)
+            {
+                traveler.Id = Guid.NewGuid();
+                traveler.BookingId = bookingId;
+            }
+
+            await _context.BookingTravelers.AddRangeAsync(newTravelers);
+
+            booking.TravelersCount = newCount;
+            booking.TotalPrice = newPrice;
+            booking.AreTravelerDetailsSubmitted = true;
+
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<(bool success, string? error, int remainingCount)> RemoveTravelerAsync(Guid bookingId, Guid travelerId, int newCount, decimal? newPrice)
+        {
+            var booking = await _context.Bookings
+                .Include(b => b.BookingTravelers)
+                .FirstOrDefaultAsync(b => b.BookingId == bookingId);
+
+            if (booking == null)
+                return (false, "Booking not found.", 0);
+
+            var traveler = booking.BookingTravelers?.FirstOrDefault(t => t.Id == travelerId);
+            if (traveler == null)
+                return (false, "Traveler not found.", booking.BookingTravelers?.Count ?? 0);
+
+            _context.BookingTravelers.Remove(traveler);
+            booking.BookingTravelers!.Remove(traveler);
+
+            var remaining = booking.BookingTravelers.Count;
+
+            if (remaining <= newCount)
+            {
+                booking.TravelersCount = newCount;
+                booking.TotalPrice = newPrice;
+            }
+
+            await _context.SaveChangesAsync();
+            return (true, null, remaining);
+        }
+
+        public async Task<(bool success, string? error)> AdminConfirmAsync(Guid bookingId)
+        {
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.BookingId == bookingId);
+            if (booking == null)
+                return (false, "Booking not found.");
+
+            if (booking.Status != "PendingPayment")
+                return (false, "Only bookings awaiting payment confirmation can be confirmed.");
+
+            if (booking.PaymentStatus != "Paid")
+                return (false, "This booking cannot be confirmed until payment has been received.");
+
+            booking.Status = "Confirmed";
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<(bool success, string? error)> AdminCompleteAsync(Guid bookingId)
+        {
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.BookingId == bookingId);
+            if (booking == null)
+                return (false, "Booking not found.");
+
+            if (booking.Status != "Confirmed")
+                return (false, "Only confirmed bookings can be marked as completed.");
+
+            booking.Status = "Completed";
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<(bool success, string? error)> AdminCancelAsync(Guid bookingId)
+        {
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.BookingId == bookingId);
+            if (booking == null)
+                return (false, "Booking not found.");
+
+            if (booking.Status == "Completed")
+                return (false, "Completed bookings cannot be cancelled.");
+
+            if (booking.Status == "Cancelled")
+                return (false, "This booking is already cancelled.");
+
+            booking.Status = "Cancelled";
+            booking.CancelledAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<(bool success, string? error)> AdminMarkPaidAsync(Guid bookingId)
+        {
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.BookingId == bookingId);
+            if (booking == null)
+                return (false, "Booking not found.");
+
+            if (booking.PaymentStatus == "Paid")
+                return (false, "This booking is already marked as paid.");
+
+            booking.PaymentStatus = "Paid";
+            booking.PaidAt = DateTime.Now;
+
+            if (string.IsNullOrWhiteSpace(booking.PaymentReference))
+                booking.PaymentReference = $"ADMIN-{Guid.NewGuid().ToString("N")[..12].ToUpperInvariant()}";
+
             await _context.SaveChangesAsync();
             return (true, null);
         }
