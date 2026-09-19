@@ -304,11 +304,11 @@
                                 <!-- Date -->
                                 <td>
                                     <div>
-                                        @booking.BookingDate.ToLocalTime().ToString("dd MMM yyyy")
+                                        @booking.BookingDate.ToPakistanTime().ToString("dd MMM yyyy")
                                     </div>
 
                                     <small class="text-muted">
-                                        @booking.BookingDate.ToLocalTime().ToString("hh:mm tt")
+                                        @booking.BookingDate.ToPakistanTime().ToString("hh:mm tt")
                                     </small>
                                 </td>
 
@@ -331,7 +331,7 @@
                                         @if (booking.PaidAt.HasValue)
                                         {
                                             <small class="d-block text-muted mt-1">
-                                                @booking.PaidAt.Value.ToLocalTime().ToString("dd MMM yyyy")
+                                                @booking.PaidAt.Value.ToPakistanTime().ToString("dd MMM yyyy")
                                             </small>
                                         }
                                     }

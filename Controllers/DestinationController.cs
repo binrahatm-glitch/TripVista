@@ -84,7 +84,7 @@ namespace TripVista.Controllers
                 ImageUrl = imageUrl,
                 Status = "Pending",
                 SubmittedByUserId = userId,
-                SubmittedAt = DateTime.Now
+                SubmittedAt = DateTime.UtcNow
             };
 
             await _destinationDAO.CreateAsync(newDestination);

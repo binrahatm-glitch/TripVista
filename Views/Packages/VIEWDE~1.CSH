@@ -1,0 +1,88 @@
+@model TripVista.Models.Entities.Packages
+@{
+    ViewData["Title"] = Model.Title;
+    var heroImage = string.IsNullOrEmpty(Model.ImagePath) ? Url.Content("~/theme/assets/img/travel/tour-3.webp") : Model.ImagePath;
+}
+
+<div class="page-title dark-background" data-aos="fade" style="background-image: url('@heroImage');">
+    <div class="container position-relative">
+        <h1>@Model.Title</h1>
+        <nav class="breadcrumbs">
+            <ol>
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li><a asp-controller="User" asp-action="UserDashboard">Packages</a></li>
+                <li class="current">@Model.Title</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="tv-section">
+    <div class="container" data-aos="fade-up">
+        <div class="row justify-content-center g-4">
+            <div class="col-lg-5">
+                @if (!string.IsNullOrEmpty(Model.ImagePath))
+                {
+                    <img src="@Model.ImagePath" class="img-fluid rounded-4 w-100" style="object-fit: cover; max-height: 420px;" alt="@Model.Title" />
+                }
+                else
+                {
+                    <img src="@Url.Content("~/theme/assets/img/travel/tour-3.webp")" class="img-fluid rounded-4 w-100" style="object-fit: cover; max-height: 420px;" alt="@Model.Title" />
+                }
+            </div>
+
+            <div class="col-lg-7">
+                <div class="tv-card h-100">
+                    <p class="text-muted mb-1">
+                        <strong>Duration:</strong> @Model.DurationDays days
+                    </p>
+
+                    <p class="text-muted mb-1">
+                        <strong>Price per person:</strong> PKR @Model.PricePerPerson.ToString("N0")
+                    </p>
+
+                    <p class="text-muted mb-1">
+                        <strong>Max Group Size:</strong> @Model.MaxGroupSize travelers
+                    </p>
+
+                    <p class="text-muted mb-3">
+                        <strong>Tour Dates:</strong> @Model.TourStartDate.ToString("dd MMM yyyy") - @Model.TourEndDate.ToString("dd MMM yyyy")
+                    </p>
+
+                    @if (Model.PackageDestinations != null && Model.PackageDestinations.Any())
+                    {
+                        <p class="text-muted mb-1"><strong>CHECK POINTS:</strong></p>
+                        <ol class="mb-3">
+                            @foreach (var stop in Model.PackageDestinations)
+                            {
+                                <li>@stop.Destination?.Name</li>
+                            }
+                        </ol>
+                    }
+
+                    <p>@Model.Details</p>
+
+                    <p class="mt-3">
+                        <strong>Status:</strong>
+                        @if (Model.IsActive)
+                        {
+                            <span class="tv-badge bg-primary text-white">Active</span>
+                        }
+                        else
+                        {
+                            <span class="tv-badge bg-danger text-white">Inactive</span>
+                        }
+                    </p>
+
+                    <div class="mt-3">
+                        <a asp-controller="User" asp-action="UserDashboard" class="btn btn-outline-secondary">Back to Packages</a>
+                        @if (Model.IsActive)
+                        {
+                            <a asp-action="AddBooking" asp-controller="Packages" asp-route-id="@Model.PackageId" class="btn btn-primary">Book Now</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

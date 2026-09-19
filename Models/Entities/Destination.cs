@@ -26,7 +26,7 @@ namespace TripVista.Models.Entities
 
         public Guid? ReviewedByAdminId { get; set; }
 
-        public DateTime SubmittedAt { get; set; } = DateTime.Now;
+        public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? ReviewedAt { get; set; }
 

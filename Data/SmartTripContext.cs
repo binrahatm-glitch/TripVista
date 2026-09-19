@@ -109,6 +109,10 @@ namespace TripVista.Data
             modelBuilder.Entity<BookingTravelers>()
                 .ToTable("booking_travelers");
 
+            modelBuilder.Entity<BookingTravelers>()
+                .HasIndex(t => new { t.BookingId, t.CNICOrPassportNumber })
+                .IsUnique();
+
             // -----------------------------
             // OTP VERIFICATIONS
             // -----------------------------

@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = Model.Title;
     var heroImage = string.IsNullOrEmpty(Model.ImagePath) ? Url.Content("~/theme/assets/img/travel/tour-3.webp") : Model.ImagePath;
+    var isExpired = Model.TourStartDate.Date < DateTimeExtensions.PakistanNow().Date;
 }
 
 <div class="page-title dark-background" data-aos="fade" style="background-image: url('@heroImage');">
@@ -51,7 +52,7 @@
 
                     @if (Model.PackageDestinations != null && Model.PackageDestinations.Any())
                     {
-                        <p class="text-muted mb-1"><strong>Itinerary:</strong></p>
+                        <p class="text-muted mb-1"><strong>CHECK POINTS:</strong></p>
                         <ol class="mb-3">
                             @foreach (var stop in Model.PackageDestinations)
                             {
@@ -64,9 +65,13 @@
 
                     <p class="mt-3">
                         <strong>Status:</strong>
-                        @if (Model.IsActive)
+                        @if (Model.IsActive && !isExpired)
                         {
                             <span class="tv-badge bg-primary text-white">Active</span>
+                        }
+                        else if (isExpired)
+                        {
+                            <span class="tv-badge bg-danger text-white">Travel Dates Passed</span>
                         }
                         else
                         {
@@ -76,7 +81,7 @@
 
                     <div class="mt-3">
                         <a asp-controller="User" asp-action="UserDashboard" class="btn btn-outline-secondary">Back to Packages</a>
-                        @if (Model.IsActive)
+                        @if (Model.IsActive && !isExpired)
                         {
                             <a asp-action="AddBooking" asp-controller="Packages" asp-route-id="@Model.PackageId" class="btn btn-primary">Book Now</a>
                         }

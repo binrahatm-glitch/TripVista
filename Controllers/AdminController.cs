@@ -91,7 +91,7 @@ namespace TripVista.Controllers
                 TourEndDate = vm.TourEndDate,
                 IsActive = vm.IsActive,
                 CreatedByAdminId = adminId,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             };
 
             var destinationIds = vm.DestinationOptions.Where(d => d.Selected).Select(d => d.DestinationId).ToList();
@@ -265,9 +265,9 @@ namespace TripVista.Controllers
                 ImageUrl = imageUrl,
                 Status = "Approved",
                 SubmittedByUserId = adminId,
-                SubmittedAt = DateTime.Now,
+                SubmittedAt = DateTime.UtcNow,
                 ReviewedByAdminId = adminId,
-                ReviewedAt = DateTime.Now
+                ReviewedAt = DateTime.UtcNow
             };
 
             await _destinationDAO.CreateAsync(newDestination);

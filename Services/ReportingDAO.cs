@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TripVista.Data;
+using TripVista.Helpers;
 using TripVista.Models.DTO;
 using TripVista.Services.Interfaces;
 
@@ -41,7 +42,7 @@ namespace TripVista.Services
             };
 
             var months = Enumerable.Range(0, 6)
-                .Select(offset => DateTime.Now.AddMonths(-5 + offset))
+                .Select(offset => DateTimeExtensions.PakistanNow().AddMonths(-5 + offset))
                 .Select(d => new DateTime(d.Year, d.Month, 1));
 
             vm.RevenueByMonth = months

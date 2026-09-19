@@ -45,7 +45,8 @@
                                 </div>
                                 <div class="col-md-3 mb-2">
                                     <label class="form-label">CNIC / Passport Number</label>
-                                    <input name="Travelers[@i].CNICOrPassportNumber" value="@Model.Travelers[i].CNICOrPassportNumber" class="form-control" required />
+                                    <input name="Travelers[@i].CNICOrPassportNumber" value="@Model.Travelers[i].CNICOrPassportNumber" class="form-control cnic-input" required />
+                                    <span class="text-danger small cnic-duplicate-msg d-none">This CNIC/Passport is already used by another traveler.</span>
                                 </div>
                                 <div class="col-md-3 mb-2">
                                     <label class="form-label">Contact Number</label>
@@ -61,3 +62,31 @@
         </div>
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        (function () {
+            const inputs = Array.from(document.querySelectorAll(".cnic-input"));
+
+            function checkDuplicates() {
+                const counts = {};
+                inputs.forEach(function (input) {
+                    const value = input.value.trim().toLowerCase();
+                    if (value) counts[value] = (counts[value] || 0) + 1;
+                });
+
+                inputs.forEach(function (input) {
+                    const value = input.value.trim().toLowerCase();
+                    const isDuplicate = value && counts[value] > 1;
+                    const msg = input.parentElement.querySelector(".cnic-duplicate-msg");
+                    if (msg) msg.classList.toggle("d-none", !isDuplicate);
+                    input.classList.toggle("is-invalid", isDuplicate);
+                });
+            }
+
+            inputs.forEach(function (input) {
+                input.addEventListener("input", checkDuplicates);
+            });
+        })();
+    </script>
+}

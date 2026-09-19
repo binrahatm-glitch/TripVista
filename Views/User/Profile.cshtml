@@ -51,7 +51,7 @@
                         <p class="mb-2">
                             <strong>Joined On:</strong><br />
                             <span class="text-muted">
-                                @Model.CreatedAt.ToString("dd MMM yyyy")
+                                @Model.CreatedAt.ToPakistanTime().ToString("dd MMM yyyy")
                             </span>
                         </p>
                     </div>

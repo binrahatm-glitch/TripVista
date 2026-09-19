@@ -89,7 +89,7 @@ namespace TripVista.Controllers
                 IsEmailVerified = false
             });
 
-            await IssueOtpAsync(model.Email);
+            await IssueOtpAsync(model.Email, OtpPurpose.Registration);
 
             return RedirectToAction("VerifyEmail", new { email = model.Email });
         }
@@ -109,7 +109,7 @@ namespace TripVista.Controllers
                 return View(model);
             }
 
-            var validOtp = await _otpService.GetValidAsync(model.Email, model.OtpCode);
+            var validOtp = await _otpService.GetValidAsync(model.Email, model.OtpCode, OtpPurpose.Registration);
             if (validOtp == null)
             {
                 ViewBag.Error = "Invalid or expired OTP. Try again.";
@@ -137,24 +137,109 @@ namespace TripVista.Controllers
             if (string.IsNullOrWhiteSpace(email))
                 return RedirectToAction("Register");
 
-            var latest = await _otpService.GetLatestAsync(email);
-            if (latest != null && DateTime.Now - latest.CreatedAt < OtpResendCooldown)
+            var latest = await _otpService.GetLatestAsync(email, OtpPurpose.Registration);
+            if (latest != null && DateTime.UtcNow - latest.CreatedAt < OtpResendCooldown)
             {
-                var wait = OtpResendCooldown - (DateTime.Now - latest.CreatedAt);
+                var wait = OtpResendCooldown - (DateTime.UtcNow - latest.CreatedAt);
                 TempData["Error"] = $"Please wait {Math.Ceiling(wait.TotalSeconds)}s before requesting another OTP.";
                 return RedirectToAction("VerifyEmail", new { email });
             }
 
-            await IssueOtpAsync(email);
+            await IssueOtpAsync(email, OtpPurpose.Registration);
             TempData["msg"] = "A new OTP has been sent to your email.";
             return RedirectToAction("VerifyEmail", new { email });
         }
 
-        private async Task IssueOtpAsync(string email)
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var user = await _userService.GetUserByEmailAsync(model.Email);
+            if (user != null)
+            {
+                await IssueOtpAsync(model.Email, OtpPurpose.PasswordReset);
+            }
+
+            // Same message whether or not the account exists, so we don't leak which emails are registered.
+            TempData["msg"] = "If that email is registered, a reset code has been sent to it.";
+            return RedirectToAction("ResetPassword", new { email = model.Email });
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword(string email)
+        {
+            return View(new ResetPasswordViewModel { Email = email });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var validOtp = await _otpService.GetValidAsync(model.Email, model.OtpCode, OtpPurpose.PasswordReset);
+            if (validOtp == null)
+            {
+                ViewBag.Error = "Invalid or expired code. Please try again.";
+                return View(model);
+            }
+
+            var user = await _userService.GetUserByEmailAsync(model.Email);
+            if (user == null)
+            {
+                ViewBag.Error = "Invalid request.";
+                return View(model);
+            }
+
+            await _otpService.MarkUsedAsync(validOtp);
+            await _userService.ChangePasswordAsync(user.UserId, model.NewPassword);
+
+            TempData["msg"] = "Password reset successfully. You can now log in.";
+            return RedirectToAction("Login");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResendResetOtp(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return RedirectToAction("ForgotPassword");
+
+            var latest = await _otpService.GetLatestAsync(email, OtpPurpose.PasswordReset);
+            if (latest != null && DateTime.UtcNow - latest.CreatedAt < OtpResendCooldown)
+            {
+                var wait = OtpResendCooldown - (DateTime.UtcNow - latest.CreatedAt);
+                TempData["Error"] = $"Please wait {Math.Ceiling(wait.TotalSeconds)}s before requesting another code.";
+                return RedirectToAction("ResetPassword", new { email });
+            }
+
+            var user = await _userService.GetUserByEmailAsync(email);
+            if (user != null)
+            {
+                await IssueOtpAsync(email, OtpPurpose.PasswordReset);
+            }
+
+            TempData["msg"] = "If that email is registered, a new code has been sent to it.";
+            return RedirectToAction("ResetPassword", new { email });
+        }
+
+        private async Task IssueOtpAsync(string email, string purpose)
         {
             var otpCode = Random.Shared.Next(100000, 999999).ToString();
-            await _otpService.CreateAsync(email, otpCode, OtpValidity);
-            await _emailService.SendAsync(email, "Your TripVista Email Verification Code", $"Your OTP Code is: {otpCode}. It expires in 10 minutes.");
+            await _otpService.CreateAsync(email, otpCode, OtpValidity, purpose);
+
+            var (subject, body) = purpose == OtpPurpose.PasswordReset
+                ? ("Your TripVista Password Reset Code", $"Your password reset code is: {otpCode}. It expires in 10 minutes. If you didn't request this, you can ignore this email.")
+                : ("Your TripVista Email Verification Code", $"Your OTP Code is: {otpCode}. It expires in 10 minutes.");
+
+            await _emailService.SendAsync(email, subject, body);
         }
 
         public IActionResult Logout()

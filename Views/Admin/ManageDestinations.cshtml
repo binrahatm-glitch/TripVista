@@ -68,7 +68,7 @@
                                 </td>
                                 <td>@dest.AdminRemarks</td>
                                 <td>@dest.ReviewedByAdmin?.FullName</td>
-                                <td>@dest.ReviewedAt?.ToString("dd MMM yyyy")</td>
+                                <td>@dest.ReviewedAt.ToPakistanTime()?.ToString("dd MMM yyyy")</td>
                                 <td>
                                     <a asp-controller="Admin" asp-action="EditDestination" asp-route-id="@dest.DestinationId" class="btn btn-outline-primary btn-sm">Edit</a>
 

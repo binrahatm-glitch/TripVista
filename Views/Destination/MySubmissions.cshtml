@@ -42,7 +42,7 @@
                             </div>
                         }
 
-                        <p class="small text-muted mb-0">Submitted on: @submission.SubmittedAt.ToString("dd MMM yyyy")</p>
+                        <p class="small text-muted mb-0">Submitted on: @submission.SubmittedAt.ToPakistanTime().ToString("dd MMM yyyy")</p>
                     </div>
                 </div>
             }

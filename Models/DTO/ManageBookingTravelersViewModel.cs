@@ -11,7 +11,7 @@ namespace TripVista.Models.DTO
         public string ContactNumber { get; set; } = string.Empty;
     }
 
-    public class ManageBookingTravelersViewModel
+    public class ManageBookingTravelersViewModel : IValidatableObject
     {
         public Guid BookingId { get; set; }
         public string PackageTitle { get; set; } = string.Empty;
@@ -24,5 +24,25 @@ namespace TripVista.Models.DTO
 
         public List<ExistingTravelerInfo> ExistingTravelers { get; set; } = new();
         public List<TravelerDetailInput> AdditionalTravelers { get; set; } = new();
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            var seen = new HashSet<string>(
+                ExistingTravelers
+                    .Select(t => t.CNICOrPassportNumber?.Trim())
+                    .Where(cnic => !string.IsNullOrEmpty(cnic))!,
+                StringComparer.OrdinalIgnoreCase);
+
+            for (int i = 0; i < AdditionalTravelers.Count; i++)
+            {
+                var cnic = AdditionalTravelers[i].CNICOrPassportNumber?.Trim();
+                if (!string.IsNullOrEmpty(cnic) && !seen.Add(cnic))
+                {
+                    yield return new ValidationResult(
+                        "Each traveler must have a unique CNIC/Passport number.",
+                        new[] { $"{nameof(AdditionalTravelers)}[{i}].{nameof(TravelerDetailInput.CNICOrPassportNumber)}" });
+                }
+            }
+        }
     }
 }

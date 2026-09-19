@@ -109,7 +109,7 @@ namespace TripVista.Services
             destination.Status = "Approved";
             destination.AdminRemarks = remarks;
             destination.ReviewedByAdminId = adminId;
-            destination.ReviewedAt = DateTime.Now;
+            destination.ReviewedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return (true, null);
@@ -123,7 +123,7 @@ namespace TripVista.Services
             destination.Status = "Rejected";
             destination.AdminRemarks = remarks;
             destination.ReviewedByAdminId = adminId;
-            destination.ReviewedAt = DateTime.Now;
+            destination.ReviewedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return true;

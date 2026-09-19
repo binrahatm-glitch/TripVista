@@ -63,11 +63,11 @@
                     <div class="text-start small">
                         <p><strong>Name:</strong> @Model.Name</p>
                         <p><strong>Location:</strong> @Model.Location</p>
-                        <p><strong>Submitted On:</strong> @Model.SubmittedAt.ToString("dd MMM yyyy")</p>
+                        <p><strong>Submitted On:</strong> @Model.SubmittedAt.ToPakistanTime().ToString("dd MMM yyyy")</p>
 
                         @if (Model.ReviewedAt != null)
                         {
-                            <p><strong>Reviewed On:</strong> @Model.ReviewedAt.Value.ToString("dd MMM yyyy")</p>
+                            <p><strong>Reviewed On:</strong> @Model.ReviewedAt.Value.ToPakistanTime().ToString("dd MMM yyyy")</p>
                         }
                     </div>
 

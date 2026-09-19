@@ -11,7 +11,7 @@ namespace TripVista.Models.Entities
         public Guid PollOptionId { get; set; }
         public Guid UserId { get; set; }
 
-        public DateTime VotedAt { get; set; } = DateTime.Now;
+        public DateTime VotedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation
         public Polls? Poll { get; set; }

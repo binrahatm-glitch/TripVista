@@ -7,6 +7,14 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/Dotnet.gitignore
 
+# Visual Studio / editor local state
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -22,6 +30,9 @@ bld/
 
 # Trained ML.NET model artifacts (regenerated on first run)
 /MLModels/
+
+# User-uploaded package/destination images (runtime-generated, GUID-named)
+/wwwroot/images/*
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/

@@ -13,10 +13,13 @@ namespace TripVista.Models.Entities
         [Required, MaxLength(6)]
         public string OtpCode { get; set; } = string.Empty;
 
+        [Required, MaxLength(20)]
+        public string Purpose { get; set; } = OtpPurpose.Registration;
+
         public DateTime ExpiresAt { get; set; }
 
         public bool IsUsed { get; set; } = false;
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

@@ -117,7 +117,7 @@
                             </div>
 
                             <div class="fw-semibold">
-                                @Model.BookingDate.ToString("dd MMM yyyy")
+                                @Model.BookingDate.ToPakistanTime().ToString("dd MMM yyyy")
                             </div>
 
                         </div>
@@ -215,7 +215,7 @@
                             </div>
 
                             <div class="fw-semibold">
-                                @(Model.PaidAt?.ToString("dd MMM yyyy, hh:mm tt") ?? "N/A")
+                                @(Model.PaidAt.ToPakistanTime()?.ToString("dd MMM yyyy, hh:mm tt") ?? "N/A")
                             </div>
 
                         </div>

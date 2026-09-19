@@ -51,7 +51,8 @@ namespace TripVista.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BookingId");
+                    b.HasIndex("BookingId", "CNICOrPassportNumber")
+                        .IsUnique();
 
                     b.ToTable("booking_travelers", (string)null);
                 });
@@ -180,6 +181,11 @@ namespace TripVista.Migrations
                         .IsRequired()
                         .HasMaxLength(6)
                         .HasColumnType("nvarchar(6)");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.HasKey("Id");
 

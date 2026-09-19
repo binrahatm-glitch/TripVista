@@ -87,7 +87,7 @@ namespace TripVista.Controllers
                 Question = vm.Question,
                 CreatedByAdminId = adminId,
                 IsActive = true,
-                CreatedAt = DateTime.Now,
+                CreatedAt = DateTime.UtcNow,
                 Options = options.Select(o => new PollOptions
                 {
                     PollOptionId = Guid.NewGuid(),

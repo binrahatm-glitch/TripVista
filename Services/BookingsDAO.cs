@@ -56,7 +56,7 @@ namespace TripVista.Services
                 Status = "PendingPayment",
                 PaymentStatus = "Pending",
                 AreTravelerDetailsSubmitted = false,
-                BookingDate = DateTime.Now
+                BookingDate = DateTime.UtcNow
             };
 
             await _context.Bookings.AddAsync(booking);
@@ -85,7 +85,7 @@ namespace TripVista.Services
             booking.Status = "Confirmed";
             booking.PaymentStatus = "Paid";
             booking.PaymentReference = paymentReference;
-            booking.PaidAt = DateTime.Now;
+            booking.PaidAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return (true, null);
@@ -121,7 +121,7 @@ namespace TripVista.Services
             {
                 // No payment has been captured yet, so it can be abandoned freely.
                 booking.Status = "Cancelled";
-                booking.CancelledAt = DateTime.Now;
+                booking.CancelledAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
                 return (true, null);
             }
@@ -129,11 +129,11 @@ namespace TripVista.Services
             if (booking.Status != "Confirmed")
                 return (false, "Only confirmed bookings can be cancelled.");
 
-            if (booking.Package == null || booking.Package.TourStartDate - DateTime.Now < CancellationWindow)
+            if (booking.Package == null || booking.Package.TourStartDate - DateTime.UtcNow < CancellationWindow)
                 return (false, "Bookings can only be cancelled at least 3 days before the tour start date.");
 
             booking.Status = "Cancelled";
-            booking.CancelledAt = DateTime.Now;
+            booking.CancelledAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return (true, null);
         }
@@ -245,7 +245,7 @@ namespace TripVista.Services
                 return (false, "This booking is already cancelled.");
 
             booking.Status = "Cancelled";
-            booking.CancelledAt = DateTime.Now;
+            booking.CancelledAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return (true, null);
         }
@@ -260,7 +260,7 @@ namespace TripVista.Services
                 return (false, "This booking is already marked as paid.");
 
             booking.PaymentStatus = "Paid";
-            booking.PaidAt = DateTime.Now;
+            booking.PaidAt = DateTime.UtcNow;
 
             if (string.IsNullOrWhiteSpace(booking.PaymentReference))
                 booking.PaymentReference = $"ADMIN-{Guid.NewGuid().ToString("N")[..12].ToUpperInvariant()}";

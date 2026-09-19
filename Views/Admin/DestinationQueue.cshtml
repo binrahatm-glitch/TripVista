@@ -34,7 +34,7 @@
                 <h5>@dest.Name</h5>
                 <p class="text-muted mb-1">@dest.Location</p>
                 <p class="small">@dest.Description</p>
-                <p class="small text-muted">Submitted by @(dest.SubmittedByUser?.FullName) on @dest.SubmittedAt.ToString("dd MMM yyyy")</p>
+                <p class="small text-muted">Submitted by @(dest.SubmittedByUser?.FullName) on @dest.SubmittedAt.ToPakistanTime().ToString("dd MMM yyyy")</p>
 
                 <div class="row g-2 mt-2">
                     <div class="col-md-8">

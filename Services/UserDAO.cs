@@ -23,7 +23,7 @@ namespace TripVista.Services
         // Create User
         public async Task<Users> CreateUserAsync(Users user)
         {
-            user.CreatedAt = DateTime.Now;
+            user.CreatedAt = DateTime.UtcNow;
             user.Password = _passwordHasher.HashPassword(user, user.Password);
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();

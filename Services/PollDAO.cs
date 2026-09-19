@@ -163,7 +163,7 @@ namespace TripVista.Services
                 PollId = pollId,
                 PollOptionId = pollOptionId,
                 UserId = userId,
-                VotedAt = DateTime.Now
+                VotedAt = DateTime.UtcNow
             });
 
             try

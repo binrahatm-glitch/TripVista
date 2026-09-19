@@ -14,15 +14,16 @@ namespace TripVista.Services
             _context = context;
         }
 
-        public async Task<OtpVerification> CreateAsync(string email, string otpCode, TimeSpan validFor)
+        public async Task<OtpVerification> CreateAsync(string email, string otpCode, TimeSpan validFor, string purpose)
         {
             var otp = new OtpVerification
             {
                 Id = Guid.NewGuid(),
                 Email = email,
                 OtpCode = otpCode,
-                CreatedAt = DateTime.Now,
-                ExpiresAt = DateTime.Now.Add(validFor),
+                Purpose = purpose,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.Add(validFor),
                 IsUsed = false
             };
 
@@ -31,18 +32,18 @@ namespace TripVista.Services
             return otp;
         }
 
-        public async Task<OtpVerification?> GetLatestAsync(string email)
+        public async Task<OtpVerification?> GetLatestAsync(string email, string purpose)
         {
             return await _context.OtpVerifications
-                .Where(o => o.Email == email)
+                .Where(o => o.Email == email && o.Purpose == purpose)
                 .OrderByDescending(o => o.CreatedAt)
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<OtpVerification?> GetValidAsync(string email, string otpCode)
+        public async Task<OtpVerification?> GetValidAsync(string email, string otpCode, string purpose)
         {
             return await _context.OtpVerifications
-                .Where(o => o.Email == email && o.OtpCode == otpCode && !o.IsUsed && o.ExpiresAt > DateTime.Now)
+                .Where(o => o.Email == email && o.OtpCode == otpCode && o.Purpose == purpose && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
                 .OrderByDescending(o => o.CreatedAt)
                 .FirstOrDefaultAsync();
         }

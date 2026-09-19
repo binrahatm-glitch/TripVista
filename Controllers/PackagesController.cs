@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TripVista.Filters;
+using TripVista.Helpers;
 using TripVista.Models.DTO;
 using TripVista.Services.Interfaces;
 
@@ -36,6 +37,12 @@ namespace TripVista.Controllers
             if (package == null || !package.IsActive)
             {
                 return NotFound();
+            }
+
+            if (package.TourStartDate.Date < DateTimeExtensions.PakistanNow().Date)
+            {
+                TempData["Error"] = "This package's travel dates have passed and it is no longer available for booking.";
+                return RedirectToAction("ViewDetails", new { id });
             }
 
             var userId = Guid.Parse(HttpContext.Session.GetString("id")!);
@@ -78,6 +85,12 @@ namespace TripVista.Controllers
             if (vm.NumberOfTravelers > package.MaxGroupSize)
             {
                 ModelState.AddModelError(nameof(vm.NumberOfTravelers), $"This package allows a maximum of {package.MaxGroupSize} travelers.");
+                return View(vm);
+            }
+
+            if (package.TourStartDate.Date < DateTimeExtensions.PakistanNow().Date)
+            {
+                ModelState.AddModelError(string.Empty, "This package's travel dates have passed and it is no longer available for booking.");
                 return View(vm);
             }
 

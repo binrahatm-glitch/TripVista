@@ -51,7 +51,7 @@
                         </div>
 
                         <p class="small text-muted mb-1">Travelers: @booking.TravelersCount</p>
-                        <p class="small text-muted mb-1">Booking Date: @booking.BookingDate.ToString("dd MMM yyyy")</p>
+                        <p class="small text-muted mb-1">Booking Date: @booking.BookingDate.ToPakistanTime().ToString("dd MMM yyyy")</p>
 
                         @if (booking.Package != null)
                         {
@@ -98,7 +98,7 @@
 
                         @if (booking.Status == "Cancelled" && booking.CancelledAt != null)
                         {
-                            <p class="small text-muted mt-2 mb-0">Cancelled on @booking.CancelledAt.Value.ToString("dd MMM yyyy")</p>
+                            <p class="small text-muted mt-2 mb-0">Cancelled on @booking.CancelledAt.Value.ToPakistanTime().ToString("dd MMM yyyy")</p>
                         }
 
                     </div>

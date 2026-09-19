@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TripVista.Data;
+using TripVista.Helpers;
 using TripVista.Models.Entities;
 using TripVista.Services.Interfaces;
 
@@ -23,8 +24,10 @@ namespace TripVista.Services
 
         public async Task<List<Packages>> GetActiveAsync()
         {
+            var today = DateTimeExtensions.PakistanNow().Date;
+
             return await _context.Packages
-                .Where(p => p.IsActive)
+                .Where(p => p.IsActive && p.TourStartDate.Date >= today)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
         }
